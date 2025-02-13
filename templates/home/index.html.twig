@@ -1,31 +1,227 @@
-{# templates/home/index.html.twig #}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page d'accueil</title>
-    <link rel="stylesheet" href="{{ asset('css/home/styles.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page d'accueil</title>
+  <link rel="stylesheet" href="{{ asset('css/home/styles.css') }}">
+  <!-- Bootstrap CSS (version 5) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <h1>Bienvenue sur notre application Symfony</h1>
-        <nav>
-            <ul>
-                <li><a href="/about">Mes Anciennes Commandes</a></li>
-                <li><a href="/">Accueil</a></li>
-                <li><a href="/contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main>
-        <section>
-            <h2>Bienvenue dans l'Application du Fauteuil Rouge!</h2>
-            <p>Ceci est la page d'accueil de l'appli.</p>
+  <header>
+    <h1>Bienvenue sur notre application Symfony</h1>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">Accueil</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item"><a class="nav-link" href="/about">Mes Anciennes Commandes</a></li>
+            <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+          </ul>
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <!-- Bouton pour ouvrir le popup du panier -->
+              <a class="nav-link" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#cartModal">
+                🛒
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+  
+  <main class="container mt-3">
+    <section>
+      <h1>Bonjour {{ app.session.get('user')['prenom'] ?? 'cher visiteur' }}</h1>
+      <h2>Bienvenue dans l'Application du Fauteuil Rouge!</h2>
+      <p>Ceci est la page d'accueil de l'appli.</p>
+    </section>
+    <section class="boutique">
+        <h2>Nos Produits</h2>
+        <div class="produits-liste">
+            {% for produit in produits %}
+                <div class="produit-cadre">
+                    <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
+                    <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
+
+                    {% if produit.prix is not null %}
+                        <p class="produit-prix">Prix: {{ produit.prix }} €</p>
+                    {% else %}
+                        {% set nbTailles = produit.avoirs|length %}
+                        {% if nbTailles == 1 %}
+                            {% set seuleTaille = produit.avoirs|first %}
+                            <p class="produit-prix">Taille : {{ seuleTaille.taille.unite }} - {{ seuleTaille.prix }} €</p>
+                        {% else %}
+                            <label for="taille-{{ produit.id }}">Taille :</label>
+                            <select id="taille-{{ produit.id }}" class="taille-select form-select">
+                                {% for avoir in produit.avoirs %}
+                                    <option value="{{ avoir.taille.unite }}">{{ avoir.taille.unite }} - {{ avoir.prix }} €</option>
+                                {% endfor %}
+                            </select>
+                        {% endif %}
+                    {% endif %}
+                        <div class="quantity-wrapper">
+                            <label for="quantite-{{ produit.id }}">Quantité :</label>
+                            <div class="input-group" style="width: 150px;">
+                                <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', -1)">-</button>
+                                <input type="number" id="quantite-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
+                                <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
+                            </div>
+                        </div>
+                    <!-- Bouton d'ajout qui ouvre le modal de confirmation -->
+                    <button class="produit-bouton btn btn-primary" onclick="openConfirmModal({{ produit.id }})">
+                        Ajouter au panier
+                    </button>
+                </div>
+            {% endfor %}
+
+            </div>
         </section>
-    </main>
-    <footer>
-        <p>&copy; Le Fauteuil Rouge</p>
-    </footer>
+  </main>
+
+  <footer class="text-center mt-4">
+    <p>&copy; Le Fauteuil Rouge</p>
+  </footer>
+
+  <!-- Modal de confirmation pour l'ajout au panier -->
+  <div class="modal fade" id="confirmAddModal" tabindex="-1" aria-labelledby="confirmAddModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmAddModalLabel">Confirmation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          Êtes-vous sûr d'ajouter ce produit au panier ?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" class="btn btn-primary" id="confirmAddButton">Confirmer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal du panier (popup récapitulatif) -->
+  <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen-sm-down">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cartModalLabel">Votre Panier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body" id="cartContent">
+          <p id="emptyCartMsg">Votre panier est vide.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle (inclut Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    let currentProduitId = null;
+
+    // Ouvre le modal de confirmation et stocke l'ID du produit à ajouter
+    function openConfirmModal(produitId) {
+      currentProduitId = produitId;
+      let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddModal'));
+      confirmModal.show();
+    }
+
+    // Lorsqu'on confirme l'ajout, la fonction est déclenchée
+    document.getElementById('confirmAddButton').addEventListener('click', function() {
+      ajouterAuPanierConfirmed(currentProduitId);
+      // Masquer le modal après confirmation
+      let modalInstance = bootstrap.Modal.getInstance(document.getElementById('confirmAddModal'));
+      modalInstance.hide();
+    });
+
+    // Ajoute le produit au panier (fonction appelée après confirmation)
+    function ajouterAuPanierConfirmed(produitId) {
+      let quantite = document.getElementById('quantite-' + produitId).value;
+      let tailleElement = document.getElementById('taille-' + produitId);
+      let taille = tailleElement ? tailleElement.value : "";
+      
+      if (quantite > 0) {
+        let produitPanier = document.getElementById('panier-produit-' + produitId);
+        if (produitPanier) {
+          let quantiteAffichee = document.getElementById('panier-quantite-' + produitId);
+          quantiteAffichee.innerText = parseInt(quantiteAffichee.innerText) + parseInt(quantite);
+        } else {
+          let cartContent = document.getElementById('cartContent');
+          // Supprime le message "Votre panier est vide." s'il existe
+          let emptyMsg = document.getElementById('emptyCartMsg');
+          if (emptyMsg) {
+            emptyMsg.remove();
+          }
+          cartContent.innerHTML += `
+            <div id="panier-produit-${produitId}" class="d-flex align-items-center justify-content-between mb-2">
+              <span>${document.getElementById('nom-' + produitId).innerText} ${taille ? '(' + taille + ')' : ''}</span>
+              <div>
+                <button class="btn btn-sm btn-secondary" onclick="modifierQuantite(${produitId}, -1)">-</button>
+                <span id="panier-quantite-${produitId}" class="mx-2">${quantite}</span>
+                <button class="btn btn-sm btn-secondary" onclick="modifierQuantite(${produitId}, 1)">+</button>
+                <button class="btn btn-sm btn-danger" onclick="retirerProduit(${produitId})">❌</button>
+              </div>
+            </div>
+          `;
+        }
+      }
+    }
+
+    function modifierQuantite(produitId, change) {
+      let quantiteAffichee = document.getElementById('panier-quantite-' + produitId);
+      let nouvelleQuantite = parseInt(quantiteAffichee.innerText) + change;
+      if (nouvelleQuantite <= 0) {
+        retirerProduit(produitId);
+      } else {
+        quantiteAffichee.innerText = nouvelleQuantite;
+      }
+    }
+
+    function retirerProduit(produitId) {
+      if (confirm("Êtes-vous sûr de vouloir retirer ce produit du panier ?")) {
+        document.getElementById('panier-produit-' + produitId).remove();
+        // Vérifier si le panier est vide et afficher le message correspondant
+        let cartContent = document.getElementById('cartContent');
+        if(cartContent.innerHTML.trim() === '') {
+          cartContent.innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
+        }
+      }
+    }
+    function updateQuantity(produitId, change) {
+        const input = document.getElementById('quantite-' + produitId);
+        let value = parseInt(input.value);
+        const min = parseInt(input.min);
+        const max = parseInt(input.max);
+        value += change;
+        if (value < min) value = min;
+        if (value > max) value = max;
+        input.value = value;
+    }
+
+  </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

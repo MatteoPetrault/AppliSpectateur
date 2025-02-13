@@ -21,6 +21,9 @@ class Avoir
     #[ORM\JoinColumn(nullable: false)]
     private ?Produit $produit = null;
 
+    #[ORM\Column]
+    private ?float $prix = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -46,6 +49,18 @@ class Avoir
     public function setProduit(?Produit $produit): static
     {
         $this->produit = $produit;
+
+        return $this;
+    }
+
+    public function getPrix(): ?float
+    {
+        return $this->prix;
+    }
+
+    public function setPrix(float $prix): static
+    {
+        $this->prix = $prix;
 
         return $this;
     }

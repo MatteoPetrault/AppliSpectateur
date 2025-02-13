@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion</title>
+    <link rel="stylesheet" href="{{ asset('css/connexion/styles.css') }}">
+    <script>
+        function toggleForms(formType) {
+            if (formType === 'login') {
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('signup-form').style.display = 'none';
+                document.getElementById('toggle-to-login').style.display = 'none';
+                document.getElementById('toggle-to-signup').style.display = 'block';
+            } else {
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('signup-form').style.display = 'block';
+                document.getElementById('toggle-to-login').style.display = 'block';
+                document.getElementById('toggle-to-signup').style.display = 'none';
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Bienvenue sur l'Application</h1>
+        
+        <!-- Formulaire de connexion (initialement affiché) -->
+        <div id="login-form" class="auth-container">
+            <form action="{{ path('connexion') }}" method="POST" class="auth-form">
+                <h2>Connexion</h2>
+                <input type="hidden" name="action" value="login">
+
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="password" required>
+
+                <button type="submit">Se connecter</button>
+            </form>
+            
+            <div class="options">
+                <a href="#" id="toggle-to-signup" style="display:block;" onclick="toggleForms('signup')">Créer un compte</a> | 
+                <a href="{{ path('home') }}">Continuer sans compte</a>
+            </div>
+        </div>
+
+        <!-- Formulaire de création de compte (initialement caché) -->
+        <div id="signup-form" class="auth-container" style="display:none;">
+            <form action="{{ path('connexion') }}" method="POST" class="auth-form">
+                <h2>Créer un compte</h2>
+                <input type="hidden" name="action" value="signup">
+
+                <label for="first_name">Prénom</label>
+                <input type="text" id="first_name" name="first_name" required>
+
+                <label for="last_name">Nom</label>
+                <input type="text" id="last_name" name="last_name" required>
+
+                <label for="login">Login</label>
+                <input type="text" id="login" name="login" required>
+
+                <label for="email_create">Email</label>
+                <input type="email" id="email_create" name="email_create" required>
+                
+                <label for="password_create">Mot de passe</label>
+                <input type="password" id="password_create" name="password_create" required>
+
+                <button type="submit">Créer le compte</button>
+            </form>
+
+            <div class="options">
+                <a href="#" id="toggle-to-login" style="display:none;" onclick="toggleForms('login')">Se connecter</a>
+                <a href="{{ path('home') }}">Continuer sans compte</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

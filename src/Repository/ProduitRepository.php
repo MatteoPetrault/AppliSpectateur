@@ -6,9 +6,6 @@ use App\Entity\Produit;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<Produit>
- */
 class ProduitRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -16,28 +13,19 @@ class ProduitRepository extends ServiceEntityRepository
         parent::__construct($registry, Produit::class);
     }
 
-    //    /**
-    //     * @return Produit[] Returns an array of Produit objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('p.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?Produit
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /**
+     * Récupère tous les produits avec leurs tailles et prix (via Avoir)
+     * @return Produit[]
+     */
+    public function findAllWithTailleAndPrix(): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.avoirs', 'a') // Relation entre Produit et Avoir
+            ->addSelect('a')
+            ->leftJoin('a.taille', 't') // Relation entre Avoir et Taille
+            ->addSelect('t')
+            ->orderBy('p.nom', 'ASC') // Trie par nom (modifiable)
+            ->getQuery()
+            ->getResult();
+    }
 }
