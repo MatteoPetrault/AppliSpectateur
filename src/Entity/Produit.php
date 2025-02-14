@@ -19,7 +19,7 @@ class Produit
     #[ORM\Column(length: 255)]
     private ?string $nom = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?float $prix = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -59,6 +59,9 @@ class Produit
      * @ORM\OneToMany(targetEntity=Appartient::class, mappedBy="produit")
      */
     private $commandes;
+
+    #[ORM\Column]
+    private ?bool $en_rupture = null;
     public function __construct()
     {
         $this->appartients = new ArrayCollection();
@@ -210,6 +213,18 @@ class Produit
                 $avoir->setProduit(null);
             }
         }
+
+        return $this;
+    }
+
+    public function isEnRupture(): ?bool
+    {
+        return $this->en_rupture;
+    }
+
+    public function setEnRupture(bool $en_rupture): static
+    {
+        $this->en_rupture = $en_rupture;
 
         return $this;
     }
