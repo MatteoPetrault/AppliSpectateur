@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Page d'accueil</title>
   <link rel="stylesheet" href="{{ asset('css/home/styles.css') }}">
   <!-- Bootstrap CSS (version 5) -->
@@ -42,11 +42,85 @@
       <h2>Bienvenue dans l'Application du Fauteuil Rouge!</h2>
       <p>Ceci est la page d'accueil de l'appli.</p>
     </section>
+    <section class="filtres">
+      <div class="row mb-3">
+        <div class="col-12 col-md-4 mb-2">
+          <select id="categorySelect" class="form-select">
+            <option value="">Toutes les catégories</option>
+            {% for category in categories %}
+              <option value="{{ category.id }}">{{ category.libelle }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-4 mb-2" id="subcategoryCol" style="display: none;">
+          <select id="subcategorySelect" class="form-select">
+            <option value="">Toutes les sous-catégories</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <script>
+    // Structure de données pour les sous-catégories
+    const categoriesData = {
+      {% for category in categories %}
+        {{ category.id }}: [
+          {% if subcategoriesByCategory[category.id] is defined %}
+            {% for subcategory in subcategoriesByCategory[category.id] %}
+              { 
+                id: {{ subcategory.id }}, 
+                libelle: "{{ subcategory.libelle|e('js') }}" 
+              },
+            {% endfor %}
+          {% endif %}
+        ],
+      {% endfor %}
+    };
+
+    // Gestion des événements
+    document.getElementById('categorySelect').addEventListener('change', function() {
+      const categoryId = this.value;
+      const subcategorySelect = document.getElementById('subcategorySelect');
+      const subcategoryCol = document.getElementById('subcategoryCol');
+      
+      subcategorySelect.innerHTML = '<option value="">Toutes les sous-catégories</option>';
+      subcategoryCol.style.display = 'none';
+
+      if (categoryId && categoriesData[categoryId]?.length > 0) {
+        categoriesData[categoryId].forEach(sub => {
+          const option = new Option(sub.libelle, sub.id);
+          subcategorySelect.add(option);
+        });
+        subcategoryCol.style.display = 'block';
+      }
+      
+      filterProducts();
+    });
+
+    document.getElementById('subcategorySelect').addEventListener('change', filterProducts);
+
+    function filterProducts() {
+      const selectedCategory = document.getElementById('categorySelect').value;
+      const selectedSubcategory = document.getElementById('subcategorySelect').value;
+
+      document.querySelectorAll('.produit-cadre').forEach(product => {
+        const productCategory = product.dataset.category;
+        const productSubcategory = product.dataset.subcategory || '';
+        
+        const categoryMatch = !selectedCategory || (productCategory === selectedCategory);
+        const subcategoryMatch = !selectedSubcategory || (productSubcategory === selectedSubcategory);
+        
+        product.style.display = (categoryMatch && subcategoryMatch) ? 'block' : 'none';
+      });
+    }
+    </script>
     <section class="boutique">
         <h2>Nos Produits</h2>
         <div class="produits-liste">
-            {% for produit in produits %}
-                <div class="produit-cadre">
+          {% for produit in produits %}
+            <div class="produit-cadre" 
+                data-category="{{ produit.categorie.id }}"
+                data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
                     <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
                     <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
 
@@ -85,10 +159,6 @@
         </section>
   </main>
 
-  <footer class="text-center mt-4">
-    <p>&copy; Le Fauteuil Rouge</p>
-  </footer>
-
   <!-- Modal de confirmation pour l'ajout au panier -->
   <div class="modal fade" id="confirmAddModal" tabindex="-1" aria-labelledby="confirmAddModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -122,6 +192,24 @@
       </div>
     </div>
   </div>
+  <!-- Modal d'erreur -->
+  <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="errorModalLabel">Erreur</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <p id="errorMessage">Vous ne pouvez pas commander plus de 10 fois le même article !</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+</div>
+
 
   <!-- Bootstrap JS Bundle (inclut Popper) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -129,86 +217,104 @@
   <script>
     let currentProduitId = null;
 
-    // Ouvre le modal de confirmation et stocke l'ID du produit à ajouter
     function openConfirmModal(produitId) {
-      currentProduitId = produitId;
-      let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddModal'));
-      confirmModal.show();
+        currentProduitId = produitId;
+        let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddModal'));
+        confirmModal.show();
     }
 
-    // Lorsqu'on confirme l'ajout, la fonction est déclenchée
     document.getElementById('confirmAddButton').addEventListener('click', function() {
-      ajouterAuPanierConfirmed(currentProduitId);
-      // Masquer le modal après confirmation
-      let modalInstance = bootstrap.Modal.getInstance(document.getElementById('confirmAddModal'));
-      modalInstance.hide();
+        ajouterAuPanierConfirmed(currentProduitId);
+        bootstrap.Modal.getInstance(document.getElementById('confirmAddModal')).hide();
     });
 
-    // Ajoute le produit au panier (fonction appelée après confirmation)
     function ajouterAuPanierConfirmed(produitId) {
-      let quantite = document.getElementById('quantite-' + produitId).value;
-      let tailleElement = document.getElementById('taille-' + produitId);
-      let taille = tailleElement ? tailleElement.value : "";
-      
-      if (quantite > 0) {
-        let produitPanier = document.getElementById('panier-produit-' + produitId);
-        if (produitPanier) {
-          let quantiteAffichee = document.getElementById('panier-quantite-' + produitId);
-          quantiteAffichee.innerText = parseInt(quantiteAffichee.innerText) + parseInt(quantite);
-        } else {
-          let cartContent = document.getElementById('cartContent');
-          // Supprime le message "Votre panier est vide." s'il existe
-          let emptyMsg = document.getElementById('emptyCartMsg');
-          if (emptyMsg) {
-            emptyMsg.remove();
-          }
-          cartContent.innerHTML += `
-            <div id="panier-produit-${produitId}" class="d-flex align-items-center justify-content-between mb-2">
-              <span>${document.getElementById('nom-' + produitId).innerText} ${taille ? '(' + taille + ')' : ''}</span>
-              <div>
-                <button class="btn btn-sm btn-secondary" onclick="modifierQuantite(${produitId}, -1)">-</button>
-                <span id="panier-quantite-${produitId}" class="mx-2">${quantite}</span>
-                <button class="btn btn-sm btn-secondary" onclick="modifierQuantite(${produitId}, 1)">+</button>
-                <button class="btn btn-sm btn-danger" onclick="retirerProduit(${produitId})">❌</button>
-              </div>
-            </div>
-          `;
+        const quantiteInput = document.getElementById('quantite-' + produitId);
+        const quantite = parseInt(quantiteInput.value);
+        const tailleElement = document.getElementById('taille-' + produitId);
+        const taille = tailleElement ? tailleElement.value : "unique";
+        const itemId = `panier-${produitId}-${taille}`;
+
+        const existingItem = document.getElementById(itemId);
+        let quantiteExistante = 0;
+        if (existingItem) {
+            quantiteExistante = parseInt(existingItem.querySelector('.panier-quantite').textContent);
         }
-      }
+
+        if (quantiteExistante + quantite > 10) {
+            showErrorPopup("Vous ne pouvez pas commander plus de 10 fois le même article !");
+            quantiteInput.value = 10 - quantiteExistante;
+            return;
+        }
+        if (quantite > 0) {
+            const cartItem = document.getElementById(itemId);
+            if (cartItem) {
+                // Mise à jour de la quantité existante
+                const span = cartItem.querySelector('.panier-quantite');
+                span.textContent = parseInt(span.textContent) + parseInt(quantite);
+            } else {
+                // Création d'un nouvel élément dans le panier
+                const cartContent = document.getElementById('cartContent');
+                if (document.getElementById('emptyCartMsg')) cartContent.innerHTML = '';
+
+                cartContent.innerHTML += `
+                    <div id="${itemId}" class="d-flex justify-content-between mb-2">
+                        <span>${document.getElementById('nom-' + produitId).textContent} (${taille})</span>
+                        <div>
+                            <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', -1)">-</button>
+                            <span class="panier-quantite mx-2">${quantite}</span>
+                            <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', 1)">+</button>
+                            <button class="btn btn-sm btn-danger" onclick="retirerProduit('${produitId}', '${taille}')">❌</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
     }
 
-    function modifierQuantite(produitId, change) {
-      let quantiteAffichee = document.getElementById('panier-quantite-' + produitId);
-      let nouvelleQuantite = parseInt(quantiteAffichee.innerText) + change;
-      if (nouvelleQuantite <= 0) {
-        retirerProduit(produitId);
-      } else {
-        quantiteAffichee.innerText = nouvelleQuantite;
-      }
+     function modifierQuantite(produitId, taille, change) {
+        const itemId = `panier-${produitId}-${taille}`;
+        const span = document.querySelector(`#${itemId} .panier-quantite`);
+        let nouvelleQuantite = parseInt(span.textContent) + change;
+
+        // Bloque si on dépasse 10 en augmentation
+        if (change === 1 && nouvelleQuantite > 10) {
+            alert("Quantité maximale (10) atteinte pour cet article !");
+            return;
+        }
+        if (nouvelleQuantite <= 0) retirerProduit(produitId, taille);
+        else span.textContent = nouvelleQuantite;
     }
 
-    function retirerProduit(produitId) {
-      if (confirm("Êtes-vous sûr de vouloir retirer ce produit du panier ?")) {
-        document.getElementById('panier-produit-' + produitId).remove();
-        // Vérifier si le panier est vide et afficher le message correspondant
-        let cartContent = document.getElementById('cartContent');
-        if(cartContent.innerHTML.trim() === '') {
-          cartContent.innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
+    function retirerProduit(produitId, taille) {
+        if (!confirm("Confirmer la suppression ?")) return;
+        const itemId = `panier-${produitId}-${taille}`;
+        document.getElementById(itemId).remove();
+        if (!document.getElementById('cartContent').children.length) {
+            document.getElementById('cartContent').innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
         }
-      }
     }
+    function showErrorPopup(message) {
+        document.getElementById('errorMessage').textContent = message;
+        let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
+    }
+
+
     function updateQuantity(produitId, change) {
         const input = document.getElementById('quantite-' + produitId);
-        let value = parseInt(input.value);
-        const min = parseInt(input.min);
-        const max = parseInt(input.max);
-        value += change;
-        if (value < min) value = min;
-        if (value > max) value = max;
-        input.value = value;
+        let value = parseInt(input.value) + change;
+            
+        // Bloque à 10 directement sur l'input
+        if (value > 10) {
+          alert("Vous ne pouvez pas sélectionner plus de 10 articles !");
+          value = 10;
+        }
+            
+        input.value = Math.max(1, Math.min(10, value));
     }
-
   </script>
+
 </body>
 </html>
 

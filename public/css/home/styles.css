@@ -36,10 +36,10 @@ main {
     padding: 20px;
 }
 
-/* Section boutique */
 .boutique {
     max-width: 1200px;
     margin: 0 auto;
+    padding: 0 15px;
 }
 
 .boutique h2 {
@@ -48,46 +48,46 @@ main {
 }
 
 .produits-liste {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
     justify-content: center;
+    width: 100%;
+    margin: 0 auto;
 }
 
 .produit-cadre {
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 8px;
-    padding: 15px;
-    width: 200px;
+    padding: 12px;
     text-align: center;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .produit-image {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 50%;
+    max-width: 60%;
     height: auto;
-    border-radius: 8px;
+    margin: 0 auto;
 }
-
 
 .produit-nom {
-    font-size: 1.2em;
-    margin: 10px 0;
-}
-
-.produit-description {
-    font-size: 0.9em;
-    color: #555;
+    font-size: 1em;
+    margin: 8px 0;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .produit-prix {
-    font-size: 1.1em;
+    font-size: 0.9em;
     color: #333;
     font-weight: bold;
+    margin: 8px 0;
 }
 
 .produit-bouton {
@@ -98,21 +98,105 @@ main {
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 0.9em;
+    width: 95%;
 }
 
 .produit-bouton:hover {
     background-color: #0056b3;
 }
 
-footer {
-    background-color: #333;
-    color: white;
-    text-align: center;
-    padding: 10px 0;
-    position: fixed;
-    width: 100%;
-    bottom: 0;
+/* Responsive tablette */
+@media (min-width: 768px) {
+    .produits-liste {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    
+    .produit-cadre {
+        padding: 15px;
+    }
+    
+    .produit-nom {
+        font-size: 1.1em;
+    }
+    
+    .produit-bouton {
+        font-size: 1em;
+    }
 }
+
+/* Responsive desktop */
+@media (min-width: 1024px) {
+    .produits-liste {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+    .produits-liste {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        padding: 0 5px;
+    }
+    
+    .produit-cadre {
+        padding: 8px;
+        min-width: 0;
+    }
+    
+    .produit-image {
+        max-width: 80%;
+    }
+    
+    .produit-nom {
+        font-size: 0.8em;
+    }
+    
+    .taille-select {
+        font-size: 0.8em !important;
+        width: 95% !important;
+        margin: 5px auto;
+        padding: 4px !important;
+    }
+}
+
+/* Très petits écrans */
+@media (max-width: 380px) {
+    .produits-liste {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+    
+    .produit-bouton {
+        font-size: 0.7em;
+        padding: 8px 10px;
+    }
+}
+
+/* Contrôles quantité */
+.quantity-wrapper .input-group {
+    max-width: 150px;
+    margin: 0 auto;
+}
+
+.quantity-wrapper .form-control {
+    padding: 4px;
+    font-size: 0.9em;
+}
+
+.quantity-wrapper .btn {
+    padding: 4px 8px;
+}
+
+/* Filtres */
+.filtres .form-select {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* Panier */
 #cartPopup {
     display: none;
     position: fixed;
@@ -122,16 +206,9 @@ footer {
     border: 1px solid #ccc;
     padding: 20px;
     z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
-#cartPopup .close-btn {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
-/* Exemple de style pour le logo du panier dans le nav */
+
 .nav-cart a {
     font-size: 1.5em;
     text-decoration: none;

@@ -39,41 +39,32 @@ class Produit
     private ?SousCategorie $sous_categorie = null;
 
     /**
-     * @var Collection<int, Appartient>
-     */
-    #[ORM\OneToMany(targetEntity: Appartient::class, mappedBy: 'produit')]
-    private Collection $appartients;
-
-    /**
      * @var Collection<int, Avoir>
      */
     #[ORM\OneToMany(targetEntity: Avoir::class, mappedBy: 'produit')]
     private Collection $avoirs;
 
     /**
-     * @ORM\ManyToMany(targetEntity=Taille::class, mappedBy="produits")
+     * @var Collection<int, LigneCommande>
      */
-    private $tailles;
-
-    /**
-     * @ORM\OneToMany(targetEntity=Appartient::class, mappedBy="produit")
-     */
-    private $commandes;
+    #[ORM\OneToMany(targetEntity: LigneCommande::class, mappedBy: 'produit')]
+    private Collection $ligneCommandes;
 
     #[ORM\Column]
     private ?bool $en_rupture = null;
 
     /**
-     * @var Collection<int, LigneCommande>
+     * @ORM\ManyToMany(targetEntity=Taille::class, mappedBy="produits")
      */
-    #[ORM\OneToMany(targetEntity: LigneCommande::class, mappedBy: 'produit')]
-    private Collection $ligneCommandes;
+    private $tailles;
+
     public function __construct()
     {
-        $this->appartients = new ArrayCollection();
         $this->avoirs = new ArrayCollection();
         $this->ligneCommandes = new ArrayCollection();
     }
+
+    // Remove all methods related to "Appartient" (getAppartients, addAppartient, removeAppartient)
 
     public function getId(): ?int
     {
@@ -88,7 +79,6 @@ class Produit
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
-
         return $this;
     }
 
@@ -97,10 +87,9 @@ class Produit
         return $this->prix;
     }
 
-    public function setPrix(float $prix): static
+    public function setPrix(?float $prix): static
     {
         $this->prix = $prix;
-
         return $this;
     }
 
@@ -112,7 +101,6 @@ class Produit
     public function setDescription(?string $description): static
     {
         $this->description = $description;
-
         return $this;
     }
 
@@ -124,7 +112,6 @@ class Produit
     public function setRefProduit(?string $ref_produit): static
     {
         $this->ref_produit = $ref_produit;
-
         return $this;
     }
 
@@ -136,7 +123,6 @@ class Produit
     public function setQuantiteProduitRestant(?int $quantite_produit_restant): static
     {
         $this->quantite_produit_restant = $quantite_produit_restant;
-
         return $this;
     }
 
@@ -148,7 +134,6 @@ class Produit
     public function setCategorie(?Categorie $categorie): static
     {
         $this->categorie = $categorie;
-
         return $this;
     }
 
@@ -160,37 +145,6 @@ class Produit
     public function setSousCategorie(?SousCategorie $sous_categorie): static
     {
         $this->sous_categorie = $sous_categorie;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Appartient>
-     */
-    public function getAppartients(): Collection
-    {
-        return $this->appartients;
-    }
-
-    public function addAppartient(Appartient $appartient): static
-    {
-        if (!$this->appartients->contains($appartient)) {
-            $this->appartients->add($appartient);
-            $appartient->setProduit($this);
-        }
-
-        return $this;
-    }
-
-    public function removeAppartient(Appartient $appartient): static
-    {
-        if ($this->appartients->removeElement($appartient)) {
-            // set the owning side to null (unless already changed)
-            if ($appartient->getProduit() === $this) {
-                $appartient->setProduit(null);
-            }
-        }
-
         return $this;
     }
 
@@ -208,19 +162,16 @@ class Produit
             $this->avoirs->add($avoir);
             $avoir->setProduit($this);
         }
-
         return $this;
     }
 
     public function removeAvoir(Avoir $avoir): static
     {
         if ($this->avoirs->removeElement($avoir)) {
-            // set the owning side to null (unless already changed)
             if ($avoir->getProduit() === $this) {
                 $avoir->setProduit(null);
             }
         }
-
         return $this;
     }
 
@@ -232,7 +183,6 @@ class Produit
     public function setEnRupture(bool $en_rupture): static
     {
         $this->en_rupture = $en_rupture;
-
         return $this;
     }
 
@@ -250,19 +200,16 @@ class Produit
             $this->ligneCommandes->add($ligneCommande);
             $ligneCommande->setProduit($this);
         }
-
         return $this;
     }
 
     public function removeLigneCommande(LigneCommande $ligneCommande): static
     {
         if ($this->ligneCommandes->removeElement($ligneCommande)) {
-            // set the owning side to null (unless already changed)
             if ($ligneCommande->getProduit() === $this) {
                 $ligneCommande->setProduit(null);
             }
         }
-
         return $this;
     }
 }

@@ -40,12 +40,6 @@ class Commande
     private ?Statut $statut = null;
 
     /**
-     * @var Collection<int, Appartient>
-     */
-    #[ORM\OneToMany(targetEntity: Appartient::class, mappedBy: 'commande')]
-    private Collection $appartients;
-
-    /**
      * @var Collection<int, LigneCommande>
      */
     #[ORM\OneToMany(targetEntity: LigneCommande::class, mappedBy: 'commande')]
@@ -53,9 +47,10 @@ class Commande
 
     public function __construct()
     {
-        $this->appartients = new ArrayCollection();
         $this->ligneCommandes = new ArrayCollection();
     }
+
+    // Remove all methods related to "Appartient"
 
     public function getId(): ?int
     {
@@ -70,7 +65,6 @@ class Commande
     public function setNumeroCommande(string $numero_commande): static
     {
         $this->numero_commande = $numero_commande;
-
         return $this;
     }
 
@@ -82,7 +76,6 @@ class Commande
     public function setHeure(\DateTimeInterface $heure): static
     {
         $this->heure = $heure;
-
         return $this;
     }
 
@@ -94,7 +87,6 @@ class Commande
     public function setDate(\DateTimeInterface $date): static
     {
         $this->date = $date;
-
         return $this;
     }
 
@@ -106,7 +98,6 @@ class Commande
     public function setPrixTotal(float $prix_total): static
     {
         $this->prix_total = $prix_total;
-
         return $this;
     }
 
@@ -118,7 +109,6 @@ class Commande
     public function setClient(?Client $client): static
     {
         $this->client = $client;
-
         return $this;
     }
 
@@ -130,7 +120,6 @@ class Commande
     public function setResponsable(?Responsable $responsable): static
     {
         $this->responsable = $responsable;
-
         return $this;
     }
 
@@ -142,37 +131,6 @@ class Commande
     public function setStatut(?Statut $statut): static
     {
         $this->statut = $statut;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Appartient>
-     */
-    public function getAppartients(): Collection
-    {
-        return $this->appartients;
-    }
-
-    public function addAppartient(Appartient $appartient): static
-    {
-        if (!$this->appartients->contains($appartient)) {
-            $this->appartients->add($appartient);
-            $appartient->setCommande($this);
-        }
-
-        return $this;
-    }
-
-    public function removeAppartient(Appartient $appartient): static
-    {
-        if ($this->appartients->removeElement($appartient)) {
-            // set the owning side to null (unless already changed)
-            if ($appartient->getCommande() === $this) {
-                $appartient->setCommande(null);
-            }
-        }
-
         return $this;
     }
 
@@ -190,19 +148,16 @@ class Commande
             $this->ligneCommandes->add($ligneCommande);
             $ligneCommande->setCommande($this);
         }
-
         return $this;
     }
 
     public function removeLigneCommande(LigneCommande $ligneCommande): static
     {
         if ($this->ligneCommandes->removeElement($ligneCommande)) {
-            // set the owning side to null (unless already changed)
             if ($ligneCommande->getCommande() === $this) {
                 $ligneCommande->setCommande(null);
             }
         }
-
         return $this;
     }
 }
