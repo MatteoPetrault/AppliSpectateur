@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20250214152236 extends AbstractMigration
+final class Version20250217135112 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -25,8 +25,9 @@ final class Version20250214152236 extends AbstractMigration
         $this->addSql('CREATE TABLE categorie (id INT AUTO_INCREMENT NOT NULL, libelle VARCHAR(255) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE client (id INT AUTO_INCREMENT NOT NULL, salle_id INT DEFAULT NULL, nom VARCHAR(255) NOT NULL, prenom VARCHAR(255) NOT NULL, login VARCHAR(255) DEFAULT NULL, mdp VARCHAR(255) DEFAULT NULL, email VARCHAR(255) DEFAULT NULL, comment VARCHAR(50) NOT NULL, INDEX IDX_C7440455DC304035 (salle_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE commande (id INT AUTO_INCREMENT NOT NULL, client_id INT NOT NULL, responsable_id INT DEFAULT NULL, statut_id INT NOT NULL, numero_commande VARCHAR(255) NOT NULL, heure DATETIME NOT NULL, date DATE NOT NULL, prix_total DOUBLE PRECISION NOT NULL, INDEX IDX_6EEAA67D19EB6921 (client_id), INDEX IDX_6EEAA67D53C59D72 (responsable_id), INDEX IDX_6EEAA67DF6203804 (statut_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+        $this->addSql('CREATE TABLE ligne_commande (id INT AUTO_INCREMENT NOT NULL, produit_id INT NOT NULL, taille_id INT DEFAULT NULL, commande_id INT NOT NULL, numero_ordre INT DEFAULT NULL, quantite INT NOT NULL, prix DOUBLE PRECISION NOT NULL, INDEX IDX_3170B74BF347EFB (produit_id), INDEX IDX_3170B74BFF25611A (taille_id), INDEX IDX_3170B74B82EA2E54 (commande_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE possede (id INT AUTO_INCREMENT NOT NULL, categorie_id INT NOT NULL, sous_categorie_id INT NOT NULL, INDEX IDX_3D0B1508BCF5E72D (categorie_id), INDEX IDX_3D0B1508365BF48 (sous_categorie_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        $this->addSql('CREATE TABLE produit (id INT AUTO_INCREMENT NOT NULL, categorie_id INT NOT NULL, sous_categorie_id INT DEFAULT NULL, nom VARCHAR(255) NOT NULL, prix DOUBLE PRECISION NOT NULL, description LONGTEXT DEFAULT NULL, ref_produit VARCHAR(255) DEFAULT NULL, quantite_produit_restant INT DEFAULT NULL, en_rupture TINYINT(1) NOT NULL, INDEX IDX_29A5EC27BCF5E72D (categorie_id), INDEX IDX_29A5EC27365BF48 (sous_categorie_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+        $this->addSql('CREATE TABLE produit (id INT AUTO_INCREMENT NOT NULL, categorie_id INT NOT NULL, sous_categorie_id INT DEFAULT NULL, nom VARCHAR(255) NOT NULL, prix DOUBLE PRECISION DEFAULT NULL, description LONGTEXT DEFAULT NULL, ref_produit VARCHAR(255) DEFAULT NULL, quantite_produit_restant INT DEFAULT NULL, en_rupture TINYINT(1) NOT NULL, INDEX IDX_29A5EC27BCF5E72D (categorie_id), INDEX IDX_29A5EC27365BF48 (sous_categorie_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE responsable (id INT AUTO_INCREMENT NOT NULL, role_id INT NOT NULL, nom VARCHAR(255) NOT NULL, prenom VARCHAR(255) NOT NULL, login VARCHAR(255) NOT NULL, mdp VARCHAR(255) NOT NULL, mail VARCHAR(255) NOT NULL, telephone VARCHAR(20) DEFAULT NULL, verif_responsable TINYINT(1) NOT NULL, INDEX IDX_52520D07D60322AC (role_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE role (id INT AUTO_INCREMENT NOT NULL, libelle VARCHAR(255) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE salle (id INT AUTO_INCREMENT NOT NULL, libelle VARCHAR(50) NOT NULL, url_qr_code VARCHAR(255) DEFAULT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
@@ -42,6 +43,9 @@ final class Version20250214152236 extends AbstractMigration
         $this->addSql('ALTER TABLE commande ADD CONSTRAINT FK_6EEAA67D19EB6921 FOREIGN KEY (client_id) REFERENCES client (id)');
         $this->addSql('ALTER TABLE commande ADD CONSTRAINT FK_6EEAA67D53C59D72 FOREIGN KEY (responsable_id) REFERENCES responsable (id)');
         $this->addSql('ALTER TABLE commande ADD CONSTRAINT FK_6EEAA67DF6203804 FOREIGN KEY (statut_id) REFERENCES statut (id)');
+        $this->addSql('ALTER TABLE ligne_commande ADD CONSTRAINT FK_3170B74BF347EFB FOREIGN KEY (produit_id) REFERENCES produit (id)');
+        $this->addSql('ALTER TABLE ligne_commande ADD CONSTRAINT FK_3170B74BFF25611A FOREIGN KEY (taille_id) REFERENCES taille (id)');
+        $this->addSql('ALTER TABLE ligne_commande ADD CONSTRAINT FK_3170B74B82EA2E54 FOREIGN KEY (commande_id) REFERENCES commande (id)');
         $this->addSql('ALTER TABLE possede ADD CONSTRAINT FK_3D0B1508BCF5E72D FOREIGN KEY (categorie_id) REFERENCES categorie (id)');
         $this->addSql('ALTER TABLE possede ADD CONSTRAINT FK_3D0B1508365BF48 FOREIGN KEY (sous_categorie_id) REFERENCES sous_categorie (id)');
         $this->addSql('ALTER TABLE produit ADD CONSTRAINT FK_29A5EC27BCF5E72D FOREIGN KEY (categorie_id) REFERENCES categorie (id)');
@@ -60,6 +64,9 @@ final class Version20250214152236 extends AbstractMigration
         $this->addSql('ALTER TABLE commande DROP FOREIGN KEY FK_6EEAA67D19EB6921');
         $this->addSql('ALTER TABLE commande DROP FOREIGN KEY FK_6EEAA67D53C59D72');
         $this->addSql('ALTER TABLE commande DROP FOREIGN KEY FK_6EEAA67DF6203804');
+        $this->addSql('ALTER TABLE ligne_commande DROP FOREIGN KEY FK_3170B74BF347EFB');
+        $this->addSql('ALTER TABLE ligne_commande DROP FOREIGN KEY FK_3170B74BFF25611A');
+        $this->addSql('ALTER TABLE ligne_commande DROP FOREIGN KEY FK_3170B74B82EA2E54');
         $this->addSql('ALTER TABLE possede DROP FOREIGN KEY FK_3D0B1508BCF5E72D');
         $this->addSql('ALTER TABLE possede DROP FOREIGN KEY FK_3D0B1508365BF48');
         $this->addSql('ALTER TABLE produit DROP FOREIGN KEY FK_29A5EC27BCF5E72D');
@@ -70,6 +77,7 @@ final class Version20250214152236 extends AbstractMigration
         $this->addSql('DROP TABLE categorie');
         $this->addSql('DROP TABLE client');
         $this->addSql('DROP TABLE commande');
+        $this->addSql('DROP TABLE ligne_commande');
         $this->addSql('DROP TABLE possede');
         $this->addSql('DROP TABLE produit');
         $this->addSql('DROP TABLE responsable');
