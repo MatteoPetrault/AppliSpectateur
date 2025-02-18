@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!-- Bootstrap JS Bundle (inclut Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    let currentProduitId = null;
+
+    function openConfirmModal(produitId) {
+        currentProduitId = produitId;
+        let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddModal'));
+        confirmModal.show();
+    }
+
+    document.getElementById('confirmAddButton').addEventListener('click', function() {
+        ajouterAuPanierConfirmed(currentProduitId);
+        bootstrap.Modal.getInstance(document.getElementById('confirmAddModal')).hide();
+    });
+
+    function ajouterAuPanierConfirmed(produitId) {
+        const quantiteInput = document.getElementById('quantite-' + produitId);
+        const quantite = parseInt(quantiteInput.value);
+        const tailleElement = document.getElementById('taille-' + produitId);
+        const taille = tailleElement ? tailleElement.value : "unique";
+        const itemId = `panier-${produitId}-${taille}`;
+
+        const existingItem = document.getElementById(itemId);
+        let quantiteExistante = 0;
+        if (existingItem) {
+            quantiteExistante = parseInt(existingItem.querySelector('.panier-quantite').textContent);
+        }
+
+        if (quantiteExistante + quantite > 10) {
+            showErrorPopup("Vous ne pouvez pas commander plus de 10 fois le même article !");
+            quantiteInput.value = 10 - quantiteExistante;
+            return;
+        }
+        if (quantite > 0) {
+            const cartItem = document.getElementById(itemId);
+            if (cartItem) {
+                // Mise à jour de la quantité existante
+                const span = cartItem.querySelector('.panier-quantite');
+                span.textContent = parseInt(span.textContent) + parseInt(quantite);
+            } else {
+                // Création d'un nouvel élément dans le panier
+                const cartContent = document.getElementById('cartContent');
+                if (document.getElementById('emptyCartMsg')) cartContent.innerHTML = '';
+
+                cartContent.innerHTML += `
+                    <div id="${itemId}" class="d-flex justify-content-between mb-2">
+                        <span>${document.getElementById('nom-' + produitId).textContent} (${taille})</span>
+                        <div>
+                            <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', -1)">-</button>
+                            <span class="panier-quantite mx-2">${quantite}</span>
+                            <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', 1)">+</button>
+                            <button class="btn btn-sm btn-danger" onclick="retirerProduit('${produitId}', '${taille}')">❌</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    }
+
+     function modifierQuantite(produitId, taille, change) {
+        const itemId = `panier-${produitId}-${taille}`;
+        const span = document.querySelector(`#${itemId} .panier-quantite`);
+        let nouvelleQuantite = parseInt(span.textContent) + change;
+
+        // Bloque si on dépasse 10 en augmentation
+        if (change === 1 && nouvelleQuantite > 10) {
+            alert("Quantité maximale (10) atteinte pour cet article !");
+            return;
+        }
+        if (nouvelleQuantite <= 0) retirerProduit(produitId, taille);
+        else span.textContent = nouvelleQuantite;
+    }
+
+    function retirerProduit(produitId, taille) {
+        if (!confirm("Confirmer la suppression ?")) return;
+        const itemId = `panier-${produitId}-${taille}`;
+        document.getElementById(itemId).remove();
+        if (!document.getElementById('cartContent').children.length) {
+            document.getElementById('cartContent').innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
+        }
+    }
+    function showErrorPopup(message) {
+        document.getElementById('errorMessage').textContent = message;
+        let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
+    }
+
+
+    function updateQuantity(produitId, change) {
+        const input = document.getElementById('quantite-' + produitId);
+        let value = parseInt(input.value) + change;
+            
+        // Bloque à 10 directement sur l'input
+        if (value > 10) {
+          alert("Vous ne pouvez pas sélectionner plus de 10 articles !");
+          value = 10;
+        }
+            
+        input.value = Math.max(1, Math.min(10, value));
+    }
+
+
+    function triCategorie() {
+        const sortValue = document.getElementById('sortSelect').value;
+        const produitsListe = document.querySelector('.produits-liste');
+        const produits = Array.from(produitsListe.querySelectorAll('.produit-cadre'));
+
+        // Déterminer la fonction de tri
+        let sortFunction;
+        switch(sortValue) {
+            case 'price_asc':
+                sortFunction = (a, b) => getPrice(a) - getPrice(b);
+                break;
+            case 'price_desc':
+                sortFunction = (a, b) => getPrice(b) - getPrice(a);
+                break;
+            case 'name_asc':
+                sortFunction = (a, b) => getName(a).localeCompare(getName(b));
+                break;
+            case 'name_desc':
+                sortFunction = (a, b) => getName(b).localeCompare(getName(a));
+                break;
+            default:
+                return; // Aucun tri
+        }
+
+        // Trier les produits
+        produits.sort(sortFunction);
+
+        // Réorganiser le DOM
+        produits.forEach(produit => produitsListe.appendChild(produit));
+    }
+
+    function getPrice(produitElement) {
+        // Cas taille unique
+        const prixElement = produitElement.querySelector('.produit-prix');
+        if (prixElement) {
+            const prixText = prixElement.textContent;
+            const matches = prixText.match(/(\d+\.?\d*)\s*€/);
+            return matches ? parseFloat(matches[1]) : 0;
+        }
+        
+        // Cas multiple tailles
+        const select = produitElement.querySelector('.taille-select');
+        if (select && select.options.length > 0) {
+            const prixText = select.options[0].textContent.split(' - ')[1];
+            const matches = prixText.match(/(\d+\.?\d*)\s*€/);
+            return matches ? parseFloat(matches[1]) : 0;
+        }
+        
+        return 0; // Valeur par défaut
+    }
+
+    function getName(produitElement) {
+        const nameElement = produitElement.querySelector('.produit-nom');
+        return nameElement ? nameElement.textContent.trim().toLowerCase() : '';
+    }
+  </script>
+    
+</body>
+</html>

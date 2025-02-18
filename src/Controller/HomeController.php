@@ -38,4 +38,25 @@ class HomeController extends AbstractController
             'subcategoriesByCategory' => $subcategoriesByCategory
         ]);
     }
+    /**
+     * @Route("/product/get-price", name="product_get_price", methods={"GET"})
+     */
+    public function getPrice(int $produit_id, int $taille_id, EntityManagerInterface $em): JsonResponse
+    {
+        // Récupérer les entités 'Avoir' pour le produit et la taille spécifiés
+        $avoir = $em->getRepository(Avoir::class)->findOneBy([
+            'produit' => $produit_id,
+            'taille' => $taille_id,
+        ]);
+
+        if ($avoir) {
+            return new JsonResponse([
+                'prix' => $avoir->getPrix(),
+            ]);
+        }
+
+        return new JsonResponse([
+            'prix' => 0,  // Retourner 0 si le produit ou la taille n'existent pas
+        ]);
+    }
 }

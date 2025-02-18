@@ -57,6 +57,15 @@
             <option value="">Toutes les sous-catégories</option>
           </select>
         </div>
+        <div class="col-12 col-md-4 mb-2">
+          <select id="sortSelect" class="form-select" onchange="triCategorie()">
+            <option value="">Trier par</option>
+            <option value="price_asc">Prix croissant</option>
+            <option value="price_desc">Prix décroissant</option>
+            <option value="name_asc">Nom (A-Z)</option>
+            <option value="name_desc">Nom (Z-A)</option>
+          </select>
+        </div>
       </div>
     </section>
 
@@ -118,44 +127,40 @@
         <h2>Nos Produits</h2>
         <div class="produits-liste">
           {% for produit in produits %}
-            <div class="produit-cadre" 
-                data-category="{{ produit.categorie.id }}"
-                data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
-                    <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
-                    <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
+              <div class="produit-cadre" 
+                  data-category="{{ produit.categorie.id }}"
+                  data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
+                      <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
+                      <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
 
-                    {% if produit.prix is not null %}
-                        <p class="produit-prix">Prix: {{ produit.prix }} €</p>
-                    {% else %}
-                        {% set nbTailles = produit.avoirs|length %}
-                        {% if nbTailles == 1 %}
-                            {% set seuleTaille = produit.avoirs|first %}
-                            <p class="produit-prix">Taille : {{ seuleTaille.taille.unite }} - {{ seuleTaille.prix }} €</p>
-                        {% else %}
-                            <label for="taille-{{ produit.id }}">Taille :</label>
-                            <select id="taille-{{ produit.id }}" class="taille-select form-select">
-                                {% for avoir in produit.avoirs %}
-                                    <option value="{{ avoir.taille.unite }}">{{ avoir.taille.unite }} - {{ avoir.prix }} €</option>
-                                {% endfor %}
-                            </select>
-                        {% endif %}
-                    {% endif %}
-                        <div class="quantity-wrapper">
-                            <label for="quantite-{{ produit.id }}">Quantité :</label>
-                            <div class="input-group" style="width: 150px;">
-                                <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', -1)">-</button>
-                                <input type="number" id="quantite-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
-                                <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
-                            </div>
-                        </div>
-                    <!-- Bouton d'ajout qui ouvre le modal de confirmation -->
-                    <button class="produit-bouton btn btn-primary" onclick="openConfirmModal({{ produit.id }})">
-                        Ajouter au panier
-                    </button>
-                </div>
-            {% endfor %}
+                      {% set nbTailles = produit.avoirs|length %}
+                      {% if nbTailles == 1 %}
+                          {% set seuleTaille = produit.avoirs|first %}
+                          <p class="produit-prix">Prix : {{ seuleTaille.taille.unite }} {{ seuleTaille.prix }}€</p>
+                      {% else %}
+                          <label for="taille-{{ produit.id }}">Taille :</label>
+                          <select id="taille-{{ produit.id }}" class="taille-select form-select">
+                              {% for avoir in produit.avoirs %}
+                                  <option value="{{ avoir.taille.unite }}">{{ avoir.taille.unite }} - {{ avoir.prix }}€</option>
+                              {% endfor %}
+                          </select>
+                      {% endif %}
 
-            </div>
+                      <div class="quantity-wrapper">
+                          <label for="quantite-{{ produit.id }}">Quantité :</label>
+                          <div class="input-group" style="width: 150px;">
+                              <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', -1)">-</button>
+                              <input type="number" id="quantite-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
+                              <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
+                          </div>
+                      </div>
+                      <!-- Bouton d'ajout qui ouvre le modal de confirmation -->
+                      <button class="produit-bouton btn btn-primary" onclick="openConfirmModal({{ produit.id }})">
+                          Ajouter au panier
+                      </button>
+                  </div>
+              {% endfor %}
+          </div>
         </section>
   </main>
 
@@ -178,142 +183,19 @@
     </div>
   </div>
 
-  <!-- Modal du panier (popup récapitulatif) -->
-  <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-fullscreen-sm-down">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="cartModalLabel">Votre Panier</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-        </div>
-        <div class="modal-body" id="cartContent">
-          <p id="emptyCartMsg">Votre panier est vide.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Modal d'erreur -->
-  <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title" id="errorModalLabel">Erreur</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-        </div>
-        <div class="modal-body">
-          <p id="errorMessage">Vous ne pouvez pas commander plus de 10 fois le même article !</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">OK</button>
-        </div>
-      </div>
-    </div>
-</div>
+  {% include 'home/card-modal.html' %}
+  {% include 'home/cart-modal-erreur.html' %}
+  {% include 'home/script.html' %}
 
-
-  <!-- Bootstrap JS Bundle (inclut Popper) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  
-  <script>
-    let currentProduitId = null;
-
-    function openConfirmModal(produitId) {
-        currentProduitId = produitId;
-        let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddModal'));
-        confirmModal.show();
-    }
-
-    document.getElementById('confirmAddButton').addEventListener('click', function() {
-        ajouterAuPanierConfirmed(currentProduitId);
-        bootstrap.Modal.getInstance(document.getElementById('confirmAddModal')).hide();
-    });
-
-    function ajouterAuPanierConfirmed(produitId) {
-        const quantiteInput = document.getElementById('quantite-' + produitId);
-        const quantite = parseInt(quantiteInput.value);
-        const tailleElement = document.getElementById('taille-' + produitId);
-        const taille = tailleElement ? tailleElement.value : "unique";
-        const itemId = `panier-${produitId}-${taille}`;
-
-        const existingItem = document.getElementById(itemId);
-        let quantiteExistante = 0;
-        if (existingItem) {
-            quantiteExistante = parseInt(existingItem.querySelector('.panier-quantite').textContent);
-        }
-
-        if (quantiteExistante + quantite > 10) {
-            showErrorPopup("Vous ne pouvez pas commander plus de 10 fois le même article !");
-            quantiteInput.value = 10 - quantiteExistante;
-            return;
-        }
-        if (quantite > 0) {
-            const cartItem = document.getElementById(itemId);
-            if (cartItem) {
-                // Mise à jour de la quantité existante
-                const span = cartItem.querySelector('.panier-quantite');
-                span.textContent = parseInt(span.textContent) + parseInt(quantite);
-            } else {
-                // Création d'un nouvel élément dans le panier
-                const cartContent = document.getElementById('cartContent');
-                if (document.getElementById('emptyCartMsg')) cartContent.innerHTML = '';
-
-                cartContent.innerHTML += `
-                    <div id="${itemId}" class="d-flex justify-content-between mb-2">
-                        <span>${document.getElementById('nom-' + produitId).textContent} (${taille})</span>
-                        <div>
-                            <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', -1)">-</button>
-                            <span class="panier-quantite mx-2">${quantite}</span>
-                            <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', 1)">+</button>
-                            <button class="btn btn-sm btn-danger" onclick="retirerProduit('${produitId}', '${taille}')">❌</button>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-    }
-
-     function modifierQuantite(produitId, taille, change) {
-        const itemId = `panier-${produitId}-${taille}`;
-        const span = document.querySelector(`#${itemId} .panier-quantite`);
-        let nouvelleQuantite = parseInt(span.textContent) + change;
-
-        // Bloque si on dépasse 10 en augmentation
-        if (change === 1 && nouvelleQuantite > 10) {
-            alert("Quantité maximale (10) atteinte pour cet article !");
-            return;
-        }
-        if (nouvelleQuantite <= 0) retirerProduit(produitId, taille);
-        else span.textContent = nouvelleQuantite;
-    }
-
-    function retirerProduit(produitId, taille) {
-        if (!confirm("Confirmer la suppression ?")) return;
-        const itemId = `panier-${produitId}-${taille}`;
-        document.getElementById(itemId).remove();
-        if (!document.getElementById('cartContent').children.length) {
-            document.getElementById('cartContent').innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
-        }
-    }
-    function showErrorPopup(message) {
-        document.getElementById('errorMessage').textContent = message;
-        let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        errorModal.show();
-    }
-
-
-    function updateQuantity(produitId, change) {
-        const input = document.getElementById('quantite-' + produitId);
-        let value = parseInt(input.value) + change;
-            
-        // Bloque à 10 directement sur l'input
-        if (value > 10) {
-          alert("Vous ne pouvez pas sélectionner plus de 10 articles !");
-          value = 10;
-        }
-            
-        input.value = Math.max(1, Math.min(10, value));
-    }
-  </script>
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
 
 </body>
 </html>

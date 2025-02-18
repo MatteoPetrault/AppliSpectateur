@@ -19,8 +19,6 @@ class Produit
     #[ORM\Column(length: 255)]
     private ?string $nom = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?float $prix = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
@@ -79,17 +77,6 @@ class Produit
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
-        return $this;
-    }
-
-    public function getPrix(): ?float
-    {
-        return $this->prix;
-    }
-
-    public function setPrix(?float $prix): static
-    {
-        $this->prix = $prix;
         return $this;
     }
 
