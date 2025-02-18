@@ -28,8 +28,11 @@ class ConnexionController extends AbstractController
                     $session->set('user', [
                         'id' => $client->getId(),
                         'prenom' => $client->getPrenom(),
+                        'nom' => $client->getNom(),
                     ]);
+                    dump($session->get('user'));
                     return $this->redirectToRoute('home');
+
                 } else {
                     $this->addFlash('error', 'Email ou mot de passe incorrect.');
                 }
@@ -49,6 +52,7 @@ class ConnexionController extends AbstractController
                 $session->set('user', [
                     'id' => $client->getId(),
                     'prenom' => $client->getPrenom(),
+                    'nom' => $client->getNom(),
                 ]);
                 return $this->redirectToRoute('home');
             }
@@ -62,8 +66,10 @@ class ConnexionController extends AbstractController
     {
         $user = $request->getSession()->get('user');
         $prenom = $user ? $user['prenom'] : 'visiteur';
+        $nom = $user ? $user['nom'] : 'visiteur';
         return $this->render('home/index.html.twig', [
-            'prenom' => $prenom
+            'prenom' => $prenom,
+            'nom' => $nom
         ]);
     }
 

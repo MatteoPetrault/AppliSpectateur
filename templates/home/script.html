@@ -165,6 +165,70 @@
         const nameElement = produitElement.querySelector('.produit-nom');
         return nameElement ? nameElement.textContent.trim().toLowerCase() : '';
     }
+    function submitOrder(event) {
+        event.preventDefault();
+
+        // Vérifier si le panier est vide
+        const cartItems = document.querySelectorAll('#cartContent > div');
+        if (cartItems.length === 0) {
+            alert('Votre panier est vide !');
+            return;
+        }
+
+        // Préparer les données
+        const formData = {
+            user: {},
+            cart: []
+        };
+
+        // Récupérer les infos utilisateur (remplace ici par des éléments HTML ou des cookies/session)
+        const userId = document.getElementById('userId'); // Par exemple, un champ caché avec l'id 'userId' dans le HTML
+        if (userId) {
+            formData.user = {
+                id: userId.value
+            };
+        } else {
+            formData.user = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value
+            };
+        }
+
+        // Récupérer les articles du panier
+        cartItems.forEach(item => {
+            const [_, produitId, taille] = item.id.split('-');
+            formData.cart.push({
+                produitId: parseInt(produitId),
+                taille: taille,
+                quantity: parseInt(item.querySelector('.panier-quantite').textContent)
+            });
+        });
+
+        // Envoyer la requête
+        fetch('/checkout', { // Remplace ici '/checkout' par l'URL de ton endpoint
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Réinitialiser le panier
+                document.getElementById('cartContent').innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
+                alert('Commande validée avec succès !');
+                bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+            } else {
+                alert('Erreur : ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Une erreur est survenue lors de la validation du panier.');
+        });
+    }
   </script>
     
 </body>

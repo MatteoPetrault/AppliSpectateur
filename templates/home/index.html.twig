@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Page d'accueil</title>
   <link rel="stylesheet" href="{{ asset('css/home/styles.css') }}">
   <!-- Bootstrap CSS (version 5) -->
@@ -25,7 +25,7 @@
           </ul>
           <ul class="navbar-nav">
             <li class="nav-item">
-              <!-- Bouton pour ouvrir le popup du panier -->
+              <!-- Bouton pour ouvrir le modal du panier -->
               <a class="nav-link" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#cartModal">
                 🛒
               </a>
@@ -39,6 +39,8 @@
   <main class="container mt-3">
     <section>
       <h1>Bonjour {{ app.session.get('user')['prenom'] ?? 'cher visiteur' }}</h1>
+      <h1>Bonjour {{ app.session.get('user')['nom'] ?? 'cher nom' }}</h1>
+
       <h2>Bienvenue dans l'Application du Fauteuil Rouge!</h2>
       <p>Ceci est la page d'accueil de l'appli.</p>
     </section>
@@ -70,98 +72,99 @@
     </section>
 
     <script>
-    // Structure de données pour les sous-catégories
-    const categoriesData = {
-      {% for category in categories %}
-        {{ category.id }}: [
-          {% if subcategoriesByCategory[category.id] is defined %}
-            {% for subcategory in subcategoriesByCategory[category.id] %}
-              { 
-                id: {{ subcategory.id }}, 
-                libelle: "{{ subcategory.libelle|e('js') }}" 
-              },
-            {% endfor %}
-          {% endif %}
-        ],
-      {% endfor %}
-    };
-
-    // Gestion des événements
-    document.getElementById('categorySelect').addEventListener('change', function() {
-      const categoryId = this.value;
-      const subcategorySelect = document.getElementById('subcategorySelect');
-      const subcategoryCol = document.getElementById('subcategoryCol');
-      
-      subcategorySelect.innerHTML = '<option value="">Toutes les sous-catégories</option>';
-      subcategoryCol.style.display = 'none';
-
-      if (categoryId && categoriesData[categoryId]?.length > 0) {
-        categoriesData[categoryId].forEach(sub => {
-          const option = new Option(sub.libelle, sub.id);
-          subcategorySelect.add(option);
-        });
-        subcategoryCol.style.display = 'block';
-      }
-      
-      filterProducts();
-    });
-
-    document.getElementById('subcategorySelect').addEventListener('change', filterProducts);
-
-    function filterProducts() {
-      const selectedCategory = document.getElementById('categorySelect').value;
-      const selectedSubcategory = document.getElementById('subcategorySelect').value;
-
-      document.querySelectorAll('.produit-cadre').forEach(product => {
-        const productCategory = product.dataset.category;
-        const productSubcategory = product.dataset.subcategory || '';
-        
-        const categoryMatch = !selectedCategory || (productCategory === selectedCategory);
-        const subcategoryMatch = !selectedSubcategory || (productSubcategory === selectedSubcategory);
-        
-        product.style.display = (categoryMatch && subcategoryMatch) ? 'block' : 'none';
-      });
-    }
-    </script>
-    <section class="boutique">
-        <h2>Nos Produits</h2>
-        <div class="produits-liste">
-          {% for produit in produits %}
-              <div class="produit-cadre" 
-                  data-category="{{ produit.categorie.id }}"
-                  data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
-                      <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
-                      <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
-
-                      {% set nbTailles = produit.avoirs|length %}
-                      {% if nbTailles == 1 %}
-                          {% set seuleTaille = produit.avoirs|first %}
-                          <p class="produit-prix">Prix : {{ seuleTaille.taille.unite }} {{ seuleTaille.prix }}€</p>
-                      {% else %}
-                          <label for="taille-{{ produit.id }}">Taille :</label>
-                          <select id="taille-{{ produit.id }}" class="taille-select form-select">
-                              {% for avoir in produit.avoirs %}
-                                  <option value="{{ avoir.taille.unite }}">{{ avoir.taille.unite }} - {{ avoir.prix }}€</option>
-                              {% endfor %}
-                          </select>
-                      {% endif %}
-
-                      <div class="quantity-wrapper">
-                          <label for="quantite-{{ produit.id }}">Quantité :</label>
-                          <div class="input-group" style="width: 150px;">
-                              <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', -1)">-</button>
-                              <input type="number" id="quantite-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
-                              <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
-                          </div>
-                      </div>
-                      <!-- Bouton d'ajout qui ouvre le modal de confirmation -->
-                      <button class="produit-bouton btn btn-primary" onclick="openConfirmModal({{ produit.id }})">
-                          Ajouter au panier
-                      </button>
-                  </div>
+      // Structure de données pour les sous-catégories
+      const categoriesData = {
+        {% for category in categories %}
+          {{ category.id }}: [
+            {% if subcategoriesByCategory[category.id] is defined %}
+              {% for subcategory in subcategoriesByCategory[category.id] %}
+                { 
+                  id: {{ subcategory.id }}, 
+                  libelle: "{{ subcategory.libelle|e('js') }}" 
+                },
               {% endfor %}
+            {% endif %}
+          ],
+        {% endfor %}
+      };
+
+      // Gestion des événements
+      document.getElementById('categorySelect').addEventListener('change', function() {
+        const categoryId = this.value;
+        const subcategorySelect = document.getElementById('subcategorySelect');
+        const subcategoryCol = document.getElementById('subcategoryCol');
+        
+        subcategorySelect.innerHTML = '<option value="">Toutes les sous-catégories</option>';
+        subcategoryCol.style.display = 'none';
+
+        if (categoryId && categoriesData[categoryId]?.length > 0) {
+          categoriesData[categoryId].forEach(sub => {
+            const option = new Option(sub.libelle, sub.id);
+            subcategorySelect.add(option);
+          });
+          subcategoryCol.style.display = 'block';
+        }
+        
+        filterProducts();
+      });
+
+      document.getElementById('subcategorySelect').addEventListener('change', filterProducts);
+
+      function filterProducts() {
+        const selectedCategory = document.getElementById('categorySelect').value;
+        const selectedSubcategory = document.getElementById('subcategorySelect').value;
+
+        document.querySelectorAll('.produit-cadre').forEach(product => {
+          const productCategory = product.dataset.category;
+          const productSubcategory = product.dataset.subcategory || '';
+          
+          const categoryMatch = !selectedCategory || (productCategory === selectedCategory);
+          const subcategoryMatch = !selectedSubcategory || (productSubcategory === selectedSubcategory);
+          
+          product.style.display = (categoryMatch && subcategoryMatch) ? 'block' : 'none';
+        });
+      }
+    </script>
+    
+    <section class="boutique">
+      <h2>Nos Produits</h2>
+      <div class="produits-liste">
+        {% for produit in produits %}
+          <div class="produit-cadre" 
+               data-category="{{ produit.categorie.id }}"
+               data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
+            <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
+            <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
+
+            {% set nbTailles = produit.avoirs|length %}
+            {% if nbTailles == 1 %}
+              {% set seuleTaille = produit.avoirs|first %}
+              <p class="produit-prix">Prix : {{ seuleTaille.taille.unite }} {{ seuleTaille.prix }}€</p>
+            {% else %}
+              <label for="taille-{{ produit.id }}">Taille :</label>
+              <select id="taille-{{ produit.id }}" class="taille-select form-select">
+                {% for avoir in produit.avoirs %}
+                  <option value="{{ avoir.taille.unite }}">{{ avoir.taille.unite }} - {{ avoir.prix }}€</option>
+                {% endfor %}
+              </select>
+            {% endif %}
+
+            <div class="quantity-wrapper">
+              <label for="quantite-{{ produit.id }}">Quantité :</label>
+              <div class="input-group" style="width: 150px;">
+                <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', -1)">-</button>
+                <input type="number" id="quantite-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
+                <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
+              </div>
+            </div>
+            <!-- Bouton d'ajout qui ouvre le modal de confirmation -->
+            <button class="produit-bouton btn btn-primary" onclick="openConfirmModal({{ produit.id }})">
+              Ajouter au panier
+            </button>
           </div>
-        </section>
+        {% endfor %}
+      </div>
+    </section>
   </main>
 
   <!-- Modal de confirmation pour l'ajout au panier -->
@@ -182,34 +185,38 @@
       </div>
     </div>
   </div>
+  
+  <pre>{{ dump(app.session.get('user')) }}</pre>
 
-  {% include 'home/card-modal.html' %}
+  <!-- Modal du panier avec le formulaire de validation de commande -->
+  <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen-sm-down">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cartModalLabel">Votre Panier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body" id="cartContent">
+          <p id="emptyCartMsg">Votre panier est vide.</p>
+          <hr>
+          <h5>Informations de Livraison</h5>
+          <form method="POST" action="/submit-order">
+            <div class="mb-3">
+              <label for="nom" class="form-label">Nom</label>
+              <input type="text" class="form-control" id="nom" name="nom" value="{{ app.session.get('user')['nom'] ?? '' }}" {% if app.session.get('user') %}readonly{% else %}required{% endif %}>
+            </div>
+            <div class="mb-3">
+              <label for="prenom" class="form-label">Prénom</label>
+              <input type="text" class="form-control" id="prenom" name="prenom" value="{{ app.session.get('user')['prenom'] ?? '' }}" {% if app.session.get('user') %}readonly{% else %}required{% endif %}>
+            </div>
+            <button type="submit" class="btn btn-primary">Valider la commande</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   {% include 'home/cart-modal-erreur.html' %}
   {% include 'home/script.html' %}
-
-  <br>
-  <br>
-  <br>
-  <br>
-  <br>
-  <br>
-  <br>
-  <br>
-  <br>
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
