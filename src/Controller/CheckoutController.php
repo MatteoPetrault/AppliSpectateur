@@ -1,5 +1,6 @@
 <?php
 // src/Controller/CheckoutController.php
+// src/Controller/CheckoutController.php
 
 namespace App\Controller;
 
@@ -23,20 +24,32 @@ class CheckoutController extends AbstractController
                 return new JsonResponse(['success' => false, 'error' => 'JSON invalide'], 400);
             }
 
-            // Gestion du client (si non connecté, création d'un client avec nom et prénom)
+            // Gestion du client (si connecté, récupérer les informations; sinon, demander nom/prénom)
+            $clientId = null;
+            $prenom = $nom = $email = null;
+
+            // Si l'utilisateur est connecté, on récupère ses informations
             if (isset($data['user']['id']) && !empty($data['user']['id'])) {
                 $clientId = $data['user']['id'];
+                $prenom = $data['user']['prenom'];
+                $nom = $data['user']['nom'];
+                $email = $data['user']['email'] ?? null;  // email est disponible si connecté
             } else {
+                // Si non connecté, on demande nom et prénom
                 $prenom = $data['user']['prenom'] ?? null;
                 $nom  = $data['user']['nom'] ?? null;
+                
+                // Si nom et prénom manquants, retour erreur
                 if (!$prenom || !$nom) {
                     return new JsonResponse(['success' => false, 'error' => 'Informations client manquantes'], 400);
                 }
+
+                // Création d'un client en base de données si non connecté
                 $connection->insert('client', [
                     'nom'    => $nom,
                     'prenom' => $prenom,
                 ]);
-                $clientId = $connection->lastInsertId();
+                $clientId = $connection->lastInsertId();  // Récupérer l'ID du client créé
             }
 
             // Vérification du panier
@@ -69,8 +82,6 @@ class CheckoutController extends AbstractController
                     ], 400);
                 }
 
-                error_log("Produit ID: $produitId - Taille ID utilisé: $tailleId");
-
                 // Vérifier le prix avec la bonne taille_id
                 $prix = $connection->fetchOne(
                     'SELECT prix FROM avoir WHERE produit_id = ? AND taille_id = ?',
@@ -78,17 +89,8 @@ class CheckoutController extends AbstractController
                 );
 
                 if (!$prix) {
-                    return new JsonResponse([
-                        'success' => false,
-                        'error' => "Prix non trouvé pour le produit ID $produitId et la taille ID $tailleId"
-                    ], 400);
-                }
-
-                error_log("Produit ID: $produitId - Taille ID: $tailleId - Prix trouvé: " . ($prix ?: 'NULL'));
-
-                if (!$prix) {
-                    return new JsonResponse([
-                        'success' => false,
+                    return new JsonResponse([ 
+                        'success' => false, 
                         'error' => "Prix non trouvé pour le produit ID $produitId et la taille ID $tailleId"
                     ], 400);
                 }

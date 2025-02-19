@@ -121,14 +121,25 @@
     }
 
 
+    function getCategorie(produitElement) {
+        return produitElement.dataset.category; // Récupère la catégorie depuis l'attribut data-category
+    }
+
+
     function triCategorie() {
         const sortValue = document.getElementById('sortSelect').value;
         const produitsListe = document.querySelector('.produits-liste');
         const produits = Array.from(produitsListe.querySelectorAll('.produit-cadre'));
 
-        // Déterminer la fonction de tri
         let sortFunction;
         switch(sortValue) {
+            case 'category':
+                sortFunction = (a, b) => {
+                    const catA = getCategorie(a);
+                    const catB = getCategorie(b);
+                    return catA.localeCompare(catB);
+                };
+                break;
             case 'price_asc':
                 sortFunction = (a, b) => getPrice(a) - getPrice(b);
                 break;
@@ -141,15 +152,16 @@
             case 'name_desc':
                 sortFunction = (a, b) => getName(b).localeCompare(getName(a));
                 break;
-            default:
-                return; // Aucun tri
+            
         }
 
-        // Trier les produits
         produits.sort(sortFunction);
-
-        // Réorganiser le DOM
-        produits.forEach(produit => produitsListe.appendChild(produit));
+        if (sortValue === 'category') {
+            produits.forEach(produit => produitsListe.appendChild(produit));
+        } else {
+            produitsListe.innerHTML = ''; // Vider la liste actuelle des produits
+            produits.forEach(produit => produitsListe.appendChild(produit));
+        }
     }
 
     function getPrice(produitElement) {

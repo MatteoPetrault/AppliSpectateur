@@ -58,13 +58,13 @@
           </select>
         </div>
         <div class="col-12 col-md-4 mb-2">
-          <select id="sortSelect" class="form-select" onchange="triCategorie()">
-            <option value="">Trier par</option>
+          <select id="sortSelect" onchange="triCategorie()">
+            <option value="category" selected>Catégories</option>
             <option value="price_asc">Prix croissant</option>
             <option value="price_desc">Prix décroissant</option>
-            <option value="name_asc">Nom (A-Z)</option>
-            <option value="name_desc">Nom (Z-A)</option>
-          </select>
+            <option value="name_asc">Nom A-Z</option>
+            <option value="name_desc">Nom Z-A</option>
+        </select>
         </div>
       </div>
     </section>
@@ -223,3 +223,4 @@
   {% include 'home/script.html' %}
 </body>
 </html>
+
