@@ -38,9 +38,7 @@
   
   <main class="container mt-3">
     <section>
-      <h1>Bonjour {{ app.session.get('user')['prenom'] ?? 'cher visiteur' }}</h1>
-      <h1>Bonjour {{ app.session.get('user')['nom'] ?? 'cher nom' }}</h1>
-
+      <h1>Bonjour {{ app.session.get('user')['prenom'] ?? '' }}</h1>
       <h2>Bienvenue dans l'Application du Fauteuil Rouge!</h2>
       <p>Ceci est la page d'accueil de l'appli.</p>
     </section>
@@ -185,8 +183,6 @@
       </div>
     </div>
   </div>
-  
-  <pre>{{ dump(app.session.get('user')) }}</pre>
 
   <!-- Modal du panier avec le formulaire de validation de commande -->
   <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
@@ -196,25 +192,32 @@
           <h5 class="modal-title" id="cartModalLabel">Votre Panier</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
         </div>
-        <div class="modal-body" id="cartContent">
-          <p id="emptyCartMsg">Votre panier est vide.</p>
-          <hr>
-          <h5>Informations de Livraison</h5>
-          <form method="POST" action="/submit-order">
-            <div class="mb-3">
-              <label for="nom" class="form-label">Nom</label>
-              <input type="text" class="form-control" id="nom" name="nom" value="{{ app.session.get('user')['nom'] ?? '' }}" {% if app.session.get('user') %}readonly{% else %}required{% endif %}>
-            </div>
-            <div class="mb-3">
-              <label for="prenom" class="form-label">Prénom</label>
-              <input type="text" class="form-control" id="prenom" name="prenom" value="{{ app.session.get('user')['prenom'] ?? '' }}" {% if app.session.get('user') %}readonly{% else %}required{% endif %}>
-            </div>
-            <button type="submit" class="btn btn-primary">Valider la commande</button>
-          </form>
+        <div class="modal-body">
+          <!-- Conteneur pour les articles du panier -->
+          <div id="cartItemsContainer">
+            <p id="emptyCartMsg">Votre panier est vide.</p>
+          </div>
+          <!-- Conteneur pour le formulaire de livraison, masqué par défaut -->
+          <div id="deliveryFormContainer" style="display: none;">
+            <hr>
+            <h5>Informations de Livraison</h5>
+            <form method="POST" action="/submit-order" onsubmit="submitOrder(event)">
+              <div class="mb-3">
+                <label for="nom" class="form-label">Nom</label>
+                <input type="text" class="form-control" id="nom" name="nom" value="{{ app.session.get('user')['nom'] ?? '' }}" {% if app.session.get('user') %}readonly{% else %}required{% endif %}>
+              </div>
+              <div class="mb-3">
+                <label for="prenom" class="form-label">Prénom</label>
+                <input type="text" class="form-control" id="prenom" name="prenom" value="{{ app.session.get('user')['prenom'] ?? '' }}" {% if app.session.get('user') %}readonly{% else %}required{% endif %}>
+              </div>
+              <button type="submit" class="btn btn-primary">Valider la commande</button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
 
   {% include 'home/cart-modal-erreur.html' %}
   {% include 'home/script.html' %}

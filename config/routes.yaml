@@ -9,4 +9,6 @@ home:
 connexion:
     path: /
     controller: App\Controller\ConnexionController::index
-
+checkout:
+    path: /checkout
+    controller: App\Controller\CheckoutController::index
