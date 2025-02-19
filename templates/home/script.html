@@ -70,7 +70,39 @@
             }
             // Afficher le formulaire de livraison si des produits sont présents
             document.getElementById('deliveryFormContainer').style.display = 'block';
+
         }
+        afficherNotification();
+    }
+    function afficherNotification() {
+        const notification = document.createElement('div');
+        notification.classList.add('cart-notification');
+        notification.innerHTML = `
+            <div class="notification-content">
+                Produit ajouté ! <a href="#" onclick="openCartModal()">Voir le panier</a>
+            </div>
+        `;
+        
+        // Ajout du clic sur toute la notification
+        notification.addEventListener('click', function(e) {
+            e.preventDefault();
+            const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
+            cartModal.show();
+            notification.remove();
+        });
+
+        document.body.appendChild(notification);
+        
+        // Suppression automatique après 5 secondes
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+
+    // Fonction pour ouvrir le modal
+    function openCartModal() {
+        const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
+        cartModal.show();
     }
 
 
@@ -130,6 +162,7 @@
         const sortValue = document.getElementById('sortSelect').value;
         const produitsListe = document.querySelector('.produits-liste');
         const produits = Array.from(produitsListe.querySelectorAll('.produit-cadre'));
+        console.log("Tri sélectionné:", sortValue);
 
         let sortFunction;
         switch(sortValue) {
@@ -188,6 +221,9 @@
         const nameElement = produitElement.querySelector('.produit-nom');
         return nameElement ? nameElement.textContent.trim().toLowerCase() : '';
     }
+    document.addEventListener("DOMContentLoaded", function() {
+        triCategorie(); // Exécute le tri au chargement de la page
+    });
     function submitOrder(event) {
         event.preventDefault();
 
