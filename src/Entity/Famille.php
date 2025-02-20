@@ -6,6 +6,8 @@ use App\Repository\FamilleRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Composer;
+use App\Entity\Avoir;
 
 #[ORM\Entity(repositoryClass: FamilleRepository::class)]
 class Famille
@@ -51,7 +53,6 @@ class Famille
     public function setLibelle(string $libelle): static
     {
         $this->libelle = $libelle;
-
         return $this;
     }
 
@@ -63,7 +64,6 @@ class Famille
     public function setNbMin(int $nbMin): static
     {
         $this->nbMin = $nbMin;
-
         return $this;
     }
 
@@ -75,7 +75,6 @@ class Famille
     public function setNbMax(int $nbMax): static
     {
         $this->nbMax = $nbMax;
-
         return $this;
     }
 
@@ -87,7 +86,6 @@ class Famille
     public function setProduit(?Produit $produit): static
     {
         $this->produit = $produit;
-
         return $this;
     }
 
@@ -105,19 +103,28 @@ class Famille
             $this->composers->add($composer);
             $composer->setFamille($this);
         }
-
         return $this;
     }
 
     public function removeComposer(Composer $composer): static
     {
         if ($this->composers->removeElement($composer)) {
-            // set the owning side to null (unless already changed)
             if ($composer->getFamille() === $this) {
                 $composer->setFamille(null);
             }
         }
-
         return $this;
+    }
+
+    /**
+     * Récupère les avoirs associés à cette famille via les objets Composer.
+     *
+     * @return Collection<int, Avoir>
+     */
+    public function getAvoirs(): Collection
+    {
+        return $this->composers->map(function(Composer $composer) {
+            return $composer->getAvoir();
+        });
     }
 }

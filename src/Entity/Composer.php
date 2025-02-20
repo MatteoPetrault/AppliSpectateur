@@ -32,7 +32,6 @@ class Composer
     public function setAvoir(?Avoir $avoir): static
     {
         $this->avoir = $avoir;
-
         return $this;
     }
 
@@ -44,7 +43,6 @@ class Composer
     public function setFamille(?Famille $famille): static
     {
         $this->famille = $famille;
-
         return $this;
     }
 }

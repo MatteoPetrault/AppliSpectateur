@@ -89,12 +89,14 @@
     </script>
     
     <section class="boutique">
-      <h2>Nos Produits</h2>
-      <div class="produits-liste">
-        {% for produit in produits %}
+    <h2>Nos Produits</h2>
+    <div class="produits-liste">
+      {# Boucle pour les produits normaux (hors catégorie Menu) #}
+      {% for produit in produits %}
+        {% if produit.categorie.id != 7 %}
           <div class="produit-cadre" 
-               data-category="{{ produit.categorie.id }}"
-               data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
+              data-category="{{ produit.categorie.id }}"
+              data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
             <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
             <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
 
@@ -119,13 +121,63 @@
                 <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
               </div>
             </div>
+
             <!-- Bouton d'ajout qui ouvre le modal de confirmation -->
             <button class="produit-bouton btn btn-primary" onclick="openConfirmModal({{ produit.id }})">
               Ajouter au panier
             </button>
           </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    </section>
+    
+    {# Nouvelle section pour les menus #}
+    <section class="menus">
+      <h2>Nos Menus</h2>
+      <div class="menus-liste">
+        {% for produit in produits %}
+          {% if produit.categorie.id == 7 %}
+            <div class="menu-cadre" data-valeur="{{ produit.valeur }}" data-produit-id="{{ produit.id }}">
+              {% if produit.refProduit %}
+                <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="menu-image">
+              {% endif %}
+              <h3>{{ produit.nom }}</h3>
+              <p class="reduction">Économisez {{ produit.valeur }}€</p>
+              
+              {# Boucle pour afficher les familles et leurs options #}
+              <div class="menu-options">
+                {% for famille in produit.familles %}
+                  <div class="famille">
+                    <label>{{ famille.libelle }}</label>
+                    <select class="form-select" id="famille-{{ famille.id }}-{{ produit.id }}">
+
+                      {# Récupérer les options disponibles pour cette famille #}
+                      {% for avoir in famille.avoirs %}
+                        <option value="{{ avoir.id }}">
+                          {{ avoir.produit.nom }} - {{ avoir.prix }}€
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="quantity-wrapper">
+                <label for="quantite-menu-{{ produit.id }}">Quantité :</label>
+                <div class="input-group" style="width: 150px;">
+                  <button type="button" class="btn btn-secondary" onclick="updateQuantityMenu('{{ produit.id }}', -1)">-</button>
+                  <input type="number" id="quantite-menu-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
+                  <button type="button" class="btn btn-secondary" onclick="updateQuantityMenu('{{ produit.id }}', 1)">+</button>
+                </div>
+              </div>
+              <button class="produit-bouton btn btn-primary" onclick="openConfirmModal2({{ produit.id }})">
+              Ajouter au panier
+            </button>
+            </div>
+          {% endif %}
         {% endfor %}
       </div>
+
     </section>
   </main>
 

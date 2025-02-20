@@ -1,62 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body>
     <!-- Bootstrap JS Bundle (inclut Popper) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  
-  <script>
-    let currentProduitId = null;
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    function openConfirmModal(produitId) {
-        currentProduitId = produitId;
-        let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddModal'));
-        confirmModal.show();
-    }
+    <script>
+        let currentProduitId = null;
 
-    document.getElementById('confirmAddButton').addEventListener('click', function() {
-        ajouterAuPanierConfirmed(currentProduitId);
-        bootstrap.Modal.getInstance(document.getElementById('confirmAddModal')).hide();
-    });
-
-    function ajouterAuPanierConfirmed(produitId) {
-        const quantiteInput = document.getElementById('quantite-' + produitId);
-        const quantite = parseInt(quantiteInput.value);
-        const tailleElement = document.getElementById('taille-' + produitId);
-        const taille = tailleElement ? tailleElement.value : "unique";
-        const itemId = `panier-${produitId}-${taille}`;
-
-        const existingItem = document.getElementById(itemId);
-        let quantiteExistante = 0;
-        if (existingItem) {
-            quantiteExistante = parseInt(existingItem.querySelector('.panier-quantite').textContent);
+        function openConfirmModal(produitId) {
+            currentProduitId = produitId;
+            let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddModal'));
+            confirmModal.show();
         }
 
-        if (quantiteExistante + quantite > 10) {
-            showErrorPopup("Vous ne pouvez pas commander plus de 10 fois le même article !");
-            quantiteInput.value = 10 - quantiteExistante;
-            return;
-        }
-        if (quantite > 0) {
-            const cartItemsContainer = document.getElementById('cartItemsContainer');
-            // Supprimer le message "Votre panier est vide" s'il existe
-            const emptyMsg = document.getElementById('emptyCartMsg');
-            if (emptyMsg) {
-                emptyMsg.remove();
+        document.getElementById('confirmAddButton').addEventListener('click', function () {
+            ajouterAuPanierConfirmed(currentProduitId);
+            bootstrap.Modal.getInstance(document.getElementById('confirmAddModal')).hide();
+        });
+
+        function ajouterAuPanierConfirmed(produitId) {
+            const quantiteInput = document.getElementById('quantite-' + produitId);
+            const quantite = parseInt(quantiteInput.value);
+            const tailleElement = document.getElementById('taille-' + produitId);
+            const taille = tailleElement ? tailleElement.value : "unique";
+            const itemId = `panier-${produitId}-${taille}`;
+
+            const existingItem = document.getElementById(itemId);
+            let quantiteExistante = 0;
+            if (existingItem) {
+                quantiteExistante = parseInt(existingItem.querySelector('.panier-quantite').textContent);
             }
 
-            const cartItem = document.getElementById(itemId);
-            if (cartItem) {
-                // Mise à jour de la quantité existante
-                const span = cartItem.querySelector('.panier-quantite');
-                span.textContent = parseInt(span.textContent) + quantite;
-            } else {
-                // Ajout d'un nouvel élément dans le panier
-                cartItemsContainer.innerHTML += `
+            if (quantiteExistante + quantite > 10) {
+                showErrorPopup("Vous ne pouvez pas commander plus de 10 fois le même article !");
+                quantiteInput.value = 10 - quantiteExistante;
+                return;
+            }
+            if (quantite > 0) {
+                const cartItemsContainer = document.getElementById('cartItemsContainer');
+                // Supprimer le message "Votre panier est vide" s'il existe
+                const emptyMsg = document.getElementById('emptyCartMsg');
+                if (emptyMsg) {
+                    emptyMsg.remove();
+                }
+
+                const cartItem = document.getElementById(itemId);
+                if (cartItem) {
+                    // Mise à jour de la quantité existante
+                    const span = cartItem.querySelector('.panier-quantite');
+                    span.textContent = parseInt(span.textContent) + quantite;
+                } else {
+                    // Ajout d'un nouvel élément dans le panier
+                    cartItemsContainer.innerHTML += `
                     <div id="${itemId}" class="d-flex justify-content-between mb-2">
                         <span>${document.getElementById('nom-' + produitId).textContent} (${taille})</span>
                         <div>
@@ -67,242 +69,306 @@
                         </div>
                     </div>
                 `;
-            }
-            // Afficher le formulaire de livraison si des produits sont présents
-            document.getElementById('deliveryFormContainer').style.display = 'block';
+                }
+                // Afficher le formulaire de livraison si des produits sont présents
+                document.getElementById('deliveryFormContainer').style.display = 'block';
 
+            }
+            afficherNotification();
         }
-        afficherNotification();
-    }
-    function afficherNotification() {
-        const notification = document.createElement('div');
-        notification.classList.add('cart-notification');
-        notification.innerHTML = `
+        function afficherNotification() {
+            const notification = document.createElement('div');
+            notification.classList.add('cart-notification');
+            notification.innerHTML = `
             <div class="notification-content">
                 Produit ajouté ! <a href="#" onclick="openCartModal()">Voir le panier</a>
             </div>
         `;
-        
-        // Ajout du clic sur toute la notification
-        notification.addEventListener('click', function(e) {
-            e.preventDefault();
+
+            // Ajout du clic sur toute la notification
+            notification.addEventListener('click', function (e) {
+                e.preventDefault();
+                const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
+                cartModal.show();
+                notification.remove();
+            });
+
+            document.body.appendChild(notification);
+
+            // Suppression automatique après 5 secondes
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+
+        // Fonction pour ouvrir le modal
+        function openCartModal() {
             const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
             cartModal.show();
-            notification.remove();
-        });
-
-        document.body.appendChild(notification);
-        
-        // Suppression automatique après 5 secondes
-        setTimeout(() => {
-            notification.remove();
-        }, 5000);
-    }
-    
-
-    // Fonction pour ouvrir le modal
-    function openCartModal() {
-        const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
-        cartModal.show();
-    }
-    function filterProducts() {
-        const selectedCategory = document.getElementById('categorySelect').value;
-        const selectedSubcategory = document.getElementById('subcategorySelect').value;
-
-        document.querySelectorAll('.produit-cadre').forEach(product => {
-          const productCategory = product.dataset.category;
-          const productSubcategory = product.dataset.subcategory || '';
-          
-          const categoryMatch = !selectedCategory || (productCategory === selectedCategory);
-          const subcategoryMatch = !selectedSubcategory || (productSubcategory === selectedSubcategory);
-          
-          product.style.display = (categoryMatch && subcategoryMatch) ? 'block' : 'none';
-        });
-      }
-
-
-     function modifierQuantite(produitId, taille, change) {
-        const itemId = `panier-${produitId}-${taille}`;
-        const span = document.querySelector(`#${itemId} .panier-quantite`);
-        let nouvelleQuantite = parseInt(span.textContent) + change;
-
-        // Bloque si on dépasse 10 en augmentation
-        if (change === 1 && nouvelleQuantite > 10) {
-            alert("Quantité maximale (10) atteinte pour cet article !");
-            return;
         }
-        if (nouvelleQuantite <= 0) retirerProduit(produitId, taille);
-        else span.textContent = nouvelleQuantite;
-    }
+        function filterProducts() {
+            const selectedCategory = document.getElementById('categorySelect').value;
+            const selectedSubcategory = document.getElementById('subcategorySelect').value;
 
-    function retirerProduit(produitId, taille) {
-        if (!confirm("Confirmer la suppression ?")) return;
-        const itemId = `panier-${produitId}-${taille}`;
-        document.getElementById(itemId).remove();
-        const cartItemsContainer = document.getElementById('cartItemsContainer');
-        if (!cartItemsContainer.children.length) {
-            cartItemsContainer.innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
-            // Masquer le formulaire de livraison si le panier est vide
-            document.getElementById('deliveryFormContainer').style.display = 'none';
-        }
-    }
+            document.querySelectorAll('.produit-cadre').forEach(product => {
+                const productCategory = product.dataset.category;
+                const productSubcategory = product.dataset.subcategory || '';
 
-    function showErrorPopup(message) {
-        document.getElementById('errorMessage').textContent = message;
-        let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        errorModal.show();
-    }
+                const categoryMatch = !selectedCategory || (productCategory === selectedCategory);
+                const subcategoryMatch = !selectedSubcategory || (productSubcategory === selectedSubcategory);
 
-
-    function updateQuantity(produitId, change) {
-        const input = document.getElementById('quantite-' + produitId);
-        let value = parseInt(input.value) + change;
-            
-        // Bloque à 10 directement sur l'input
-        if (value > 10) {
-          alert("Vous ne pouvez pas sélectionner plus de 10 articles !");
-          value = 10;
-        }
-            
-        input.value = Math.max(1, Math.min(10, value));
-    }
-
-
-    function getCategorie(produitElement) {
-        return produitElement.dataset.category; // Récupère la catégorie depuis l'attribut data-category
-    }
-
-
-    function triCategorie() {
-        const sortValue = document.getElementById('sortSelect').value;
-        const produitsListe = document.querySelector('.produits-liste');
-        const produits = Array.from(produitsListe.querySelectorAll('.produit-cadre'));
-        console.log("Tri sélectionné:", sortValue);
-
-        let sortFunction;
-        switch(sortValue) {
-            case 'category':
-                sortFunction = (a, b) => {
-                    const catA = getCategorie(a);
-                    const catB = getCategorie(b);
-                    return catA.localeCompare(catB);
-                };
-                break;
-            case 'price_asc':
-                sortFunction = (a, b) => getPrice(a) - getPrice(b);
-                break;
-            case 'price_desc':
-                sortFunction = (a, b) => getPrice(b) - getPrice(a);
-                break;
-            case 'name_asc':
-                sortFunction = (a, b) => getName(a).localeCompare(getName(b));
-                break;
-            case 'name_desc':
-                sortFunction = (a, b) => getName(b).localeCompare(getName(a));
-                break;
-            
-        }
-
-        produits.sort(sortFunction);
-        if (sortValue === 'category') {
-            produits.forEach(produit => produitsListe.appendChild(produit));
-        } else {
-            produitsListe.innerHTML = ''; // Vider la liste actuelle des produits
-            produits.forEach(produit => produitsListe.appendChild(produit));
-        }
-    }
-
-    function getPrice(produitElement) {
-        // Cas taille unique
-        const prixElement = produitElement.querySelector('.produit-prix');
-        if (prixElement) {
-            const prixText = prixElement.textContent;
-            const matches = prixText.match(/(\d+\.?\d*)\s*€/);
-            return matches ? parseFloat(matches[1]) : 0;
-        }
-        
-        // Cas multiple tailles
-        const select = produitElement.querySelector('.taille-select');
-        if (select && select.options.length > 0) {
-            const prixText = select.options[0].textContent.split(' - ')[1];
-            const matches = prixText.match(/(\d+\.?\d*)\s*€/);
-            return matches ? parseFloat(matches[1]) : 0;
-        }
-        
-        return 0; // Valeur par défaut
-    }
-
-    function getName(produitElement) {
-        const nameElement = produitElement.querySelector('.produit-nom');
-        return nameElement ? nameElement.textContent.trim().toLowerCase() : '';
-    }
-    document.addEventListener("DOMContentLoaded", function() {
-        triCategorie(); // Exécute le tri au chargement de la page
-    });
-    function submitOrder(event) {
-        event.preventDefault();
-
-        const cartItems = document.querySelectorAll('#cartItemsContainer > div');
-        if (cartItems.length === 0) {
-            alert('Votre panier est vide !');
-            return;
-        }
-
-        // Préparation des données
-        const formData = {
-            user: {},
-            cart: []
-        };
-
-        const userId = document.getElementById('userId');
-        if (userId) {
-            formData.user = {
-                id: userId.value
-            };
-        } else {
-            formData.user = {
-                prenom: document.getElementById('prenom').value,
-                nom: document.getElementById('nom').value
-            };
-        }
-
-        cartItems.forEach(item => {
-            const [_, produitId, taille] = item.id.split('-');
-            formData.cart.push({
-                produitId: parseInt(produitId),
-                taille: taille,
-                quantity: parseInt(item.querySelector('.panier-quantite').textContent)
+                product.style.display = (categoryMatch && subcategoryMatch) ? 'block' : 'none';
             });
-        });
+        }
 
-        // Envoi de la requête (adapter l'URL de l'endpoint si besoin)
-        fetch('/checkout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Réinitialiser le panier et masquer le formulaire
-                document.getElementById('cartItemsContainer').innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
-                document.getElementById('deliveryFormContainer').style.display = 'none';
-                alert('Commande validée avec succès !');
-                bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
-            } else {
-                alert('Erreur : ' + data.error);
+
+        function modifierQuantite(produitId, taille, change) {
+            const itemId = `panier-${produitId}-${taille}`;
+            const span = document.querySelector(`#${itemId} .panier-quantite`);
+            let nouvelleQuantite = parseInt(span.textContent) + change;
+
+            // Bloque si on dépasse 10 en augmentation
+            if (change === 1 && nouvelleQuantite > 10) {
+                alert("Quantité maximale (10) atteinte pour cet article !");
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Une erreur est survenue lors de la validation du panier.');
-        });
-    }
+            if (nouvelleQuantite <= 0) retirerProduit(produitId, taille);
+            else span.textContent = nouvelleQuantite;
+        }
 
-  </script>
-    
+        function retirerProduit(produitId, taille) {
+            if (!confirm("Confirmer la suppression ?")) return;
+            const itemId = `panier-${produitId}-${taille}`;
+            document.getElementById(itemId).remove();
+            const cartItemsContainer = document.getElementById('cartItemsContainer');
+            if (!cartItemsContainer.children.length) {
+                cartItemsContainer.innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
+                // Masquer le formulaire de livraison si le panier est vide
+                document.getElementById('deliveryFormContainer').style.display = 'none';
+            }
+        }
+
+        function showErrorPopup(message) {
+            document.getElementById('errorMessage').textContent = message;
+            let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            errorModal.show();
+        }
+
+
+        function updateQuantity(produitId, change) {
+            const input = document.getElementById('quantite-' + produitId);
+            let value = parseInt(input.value) + change;
+
+            // Bloque à 10 directement sur l'input
+            if (value > 10) {
+                alert("Vous ne pouvez pas sélectionner plus de 10 articles !");
+                value = 10;
+            }
+
+            input.value = Math.max(1, Math.min(10, value));
+        }
+
+
+        function getCategorie(produitElement) {
+            return produitElement.dataset.category; // Récupère la catégorie depuis l'attribut data-category
+        }
+
+
+        function triCategorie() {
+            const sortValue = document.getElementById('sortSelect').value;
+            const produitsListe = document.querySelector('.produits-liste');
+            const produits = Array.from(produitsListe.querySelectorAll('.produit-cadre'));
+            console.log("Tri sélectionné:", sortValue);
+
+            let sortFunction;
+            switch (sortValue) {
+                case 'category':
+                    sortFunction = (a, b) => {
+                        const catA = getCategorie(a);
+                        const catB = getCategorie(b);
+                        return catA.localeCompare(catB);
+                    };
+                    break;
+                case 'price_asc':
+                    sortFunction = (a, b) => getPrice(a) - getPrice(b);
+                    break;
+                case 'price_desc':
+                    sortFunction = (a, b) => getPrice(b) - getPrice(a);
+                    break;
+                case 'name_asc':
+                    sortFunction = (a, b) => getName(a).localeCompare(getName(b));
+                    break;
+                case 'name_desc':
+                    sortFunction = (a, b) => getName(b).localeCompare(getName(a));
+                    break;
+
+            }
+
+            produits.sort(sortFunction);
+            if (sortValue === 'category') {
+                produits.forEach(produit => produitsListe.appendChild(produit));
+            } else {
+                produitsListe.innerHTML = ''; // Vider la liste actuelle des produits
+                produits.forEach(produit => produitsListe.appendChild(produit));
+            }
+        }
+
+        function getPrice(produitElement) {
+            // Cas taille unique
+            const prixElement = produitElement.querySelector('.produit-prix');
+            if (prixElement) {
+                const prixText = prixElement.textContent;
+                const matches = prixText.match(/(\d+\.?\d*)\s*€/);
+                return matches ? parseFloat(matches[1]) : 0;
+            }
+
+            // Cas multiple tailles
+            const select = produitElement.querySelector('.taille-select');
+            if (select && select.options.length > 0) {
+                const prixText = select.options[0].textContent.split(' - ')[1];
+                const matches = prixText.match(/(\d+\.?\d*)\s*€/);
+                return matches ? parseFloat(matches[1]) : 0;
+            }
+
+            return 0; // Valeur par défaut
+        }
+
+        function getName(produitElement) {
+            const nameElement = produitElement.querySelector('.produit-nom');
+            return nameElement ? nameElement.textContent.trim().toLowerCase() : '';
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+            triCategorie(); // Exécute le tri au chargement de la page
+        });
+        function submitOrder(event) {
+            event.preventDefault();
+
+            const cartItems = document.querySelectorAll('#cartItemsContainer > div');
+            if (cartItems.length === 0) {
+                alert('Votre panier est vide !');
+                return;
+            }
+
+            // Préparation des données
+            const formData = {
+                user: {},
+                cart: []
+            };
+
+            const userId = document.getElementById('userId');
+            if (userId) {
+                formData.user = {
+                    id: userId.value
+                };
+            } else {
+                formData.user = {
+                    prenom: document.getElementById('prenom').value,
+                    nom: document.getElementById('nom').value
+                };
+            }
+
+            cartItems.forEach(item => {
+                const [_, produitId, taille] = item.id.split('-');
+                formData.cart.push({
+                    produitId: parseInt(produitId),
+                    taille: taille,
+                    quantity: parseInt(item.querySelector('.panier-quantite').textContent)
+                });
+            });
+
+            // Envoi de la requête (adapter l'URL de l'endpoint si besoin)
+            fetch('/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Réinitialiser le panier et masquer le formulaire
+                        document.getElementById('cartItemsContainer').innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
+                        document.getElementById('deliveryFormContainer').style.display = 'none';
+                        alert('Commande validée avec succès !');
+                        bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+                    } else {
+                        alert('Erreur : ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Une erreur est survenue lors de la validation du panier.');
+                });
+        }
+
+        function updateQuantityMenu(produitId, change) {
+            const input = document.getElementById(`quantite-menu-${produitId}`);
+            let newValue = parseInt(input.value) + change;
+            if (newValue < 1) newValue = 1;
+            if (newValue > 10) newValue = 10;
+            input.value = newValue;
+        }
+
+        function openConfirmModal2(produitId) {
+            const menuCadre = document.querySelector(`.menu-cadre[data-produit-id="${produitId}"]`);
+
+            if (!menuCadre) {
+                console.error(`Erreur: Impossible de trouver le menu avec produitId ${produitId}`);
+                return;
+            }
+
+            const quantityInput = menuCadre.querySelector(`#quantite-menu-${produitId}`);
+            console.log("Element trouvé ?", quantityInput);
+            if (!quantityInput) {
+                console.error(`Erreur: Impossible de trouver l'input quantité pour produitId ${produitId}`);
+                return;
+            }
+            const quantity = parseInt(quantityInput.value);
+            const valeur = parseFloat(menuCadre.dataset.valeur);
+            console.log("Quantité sélectionnée :", quantity);
+            // Récupérer les sélections de chaque famille
+            const selects = menuCadre.querySelectorAll('.famille select');
+            const avoirIds = Array.from(selects).map(select => select.value);
+
+            if (avoirIds.some(id => !id)) {
+                alert('Veuillez sélectionner une option pour chaque catégorie.');
+                return;
+            }
+
+            // Envoyer les données au serveur
+            fetch('/panier/ajouter-menu', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    produitId: produitId,
+                    avoirIds: avoirIds,
+                    quantity: quantity,
+                    valeur: valeur
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualiser le panier ou afficher un message
+                        window.location.reload();
+                    } else {
+                        alert('Erreur lors de l\'ajout au panier.');
+                    }
+                });
+        }
+
+
+
+
+
+    </script>
+
 </body>
+
 </html>

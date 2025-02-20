@@ -255,3 +255,35 @@ main {
     text-decoration: underline;
     font-weight: bold;
 }
+.menus-liste {
+    display: grid;
+    gap: 20px;
+    padding: 15px;
+  }
+  
+  .menu-cadre {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 8px;
+    background: white;
+  }
+  
+  .menu-image {
+    max-width: 200px;
+    height: auto;
+    margin-bottom: 10px;
+  }
+  
+  .reduction {
+    color: #28a745;
+    font-weight: bold;
+    font-size: 1.2em;
+  }
+  
+  .menu-options {
+    margin: 15px 0;
+  }
+  
+  .famille {
+    margin-bottom: 10px;
+  }
