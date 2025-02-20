@@ -33,6 +33,9 @@ class LigneCommande
     #[ORM\JoinColumn(nullable: false)]
     private ?Commande $commande = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $numeroMenu = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -106,6 +109,18 @@ class LigneCommande
     public function setCommande(?Commande $commande): static
     {
         $this->commande = $commande;
+
+        return $this;
+    }
+
+    public function getNumeroMenu(): ?int
+    {
+        return $this->numeroMenu;
+    }
+
+    public function setNumeroMenu(?int $numeroMenu): static
+    {
+        $this->numeroMenu = $numeroMenu;
 
         return $this;
     }

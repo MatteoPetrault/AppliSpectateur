@@ -98,12 +98,27 @@
             notification.remove();
         }, 5000);
     }
+    
 
     // Fonction pour ouvrir le modal
     function openCartModal() {
         const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
         cartModal.show();
     }
+    function filterProducts() {
+        const selectedCategory = document.getElementById('categorySelect').value;
+        const selectedSubcategory = document.getElementById('subcategorySelect').value;
+
+        document.querySelectorAll('.produit-cadre').forEach(product => {
+          const productCategory = product.dataset.category;
+          const productSubcategory = product.dataset.subcategory || '';
+          
+          const categoryMatch = !selectedCategory || (productCategory === selectedCategory);
+          const subcategoryMatch = !selectedSubcategory || (productSubcategory === selectedSubcategory);
+          
+          product.style.display = (categoryMatch && subcategoryMatch) ? 'block' : 'none';
+        });
+      }
 
 
      function modifierQuantite(produitId, taille, change) {

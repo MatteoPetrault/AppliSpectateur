@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <section class="filtres">
+        <div class="row mb-3">
+          <div class="col-12 col-md-4 mb-2">
+            <select id="categorySelect" class="form-select">
+              <option value="">Toutes les catégories</option>
+              {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.libelle }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-md-4 mb-2" id="subcategoryCol" style="display: none;">
+            <select id="subcategorySelect" class="form-select">
+              <option value="">Toutes les sous-catégories</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-4 mb-2">
+            <select id="sortSelect" onchange="triCategorie()">
+              <option value="category" selected>Catégories</option>
+              <option value="price_asc" >Prix croissant</option>
+              <option value="price_desc">Prix décroissant</option>
+              <option value="name_asc">Nom A-Z</option>
+              <option value="name_desc">Nom Z-A</option>
+          </select>
+          </div>
+        </div>
+      </section>
+    
+</body>
+</html>

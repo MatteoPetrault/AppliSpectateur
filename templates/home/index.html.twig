@@ -12,62 +12,39 @@
   <header>
     <h1 class="title_fauteuil">Le Fauteuil Rouge</h1>
     <br>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+   <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container-fluid">
         <a class="navbar-brand" href="/">Accueil</a>
+        <a class="nav-link" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#cartModal">
+          <img src="/image/panier2.png" alt="Panier" width="30" height="30">
+        </a>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav me-auto">
-            <li class="nav-item"><a class="nav-link" href="/about">Mes Anciennes Commandes</a></li>
+            <li class="nav-item"><a class="nav-link" href="/mon_compte">Mon Compte</a></li>
             <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
           </ul>
           <ul class="navbar-nav">
             <li class="nav-item">
               <!-- Bouton pour ouvrir le modal du panier -->
-              <a class="nav-link" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#cartModal">
-                🛒
-              </a>
+              
             </li>
           </ul>
         </div>
       </div>
     </nav>
+
   </header>
   
   <main class="container mt-3">
     <section>
       <h1>Bonjour {{ app.session.get('user')['prenom'] ?? '' }}</h1>
-      <h2>Bienvenue dans l'Application du Fauteuil Rouge!</h2>
     </section>
-    <section class="filtres">
-      <div class="row mb-3">
-        <div class="col-12 col-md-4 mb-2">
-          <select id="categorySelect" class="form-select">
-            <option value="">Toutes les catégories</option>
-            {% for category in categories %}
-              <option value="{{ category.id }}">{{ category.libelle }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-12 col-md-4 mb-2" id="subcategoryCol" style="display: none;">
-          <select id="subcategorySelect" class="form-select">
-            <option value="">Toutes les sous-catégories</option>
-          </select>
-        </div>
-        <div class="col-12 col-md-4 mb-2">
-          <select id="sortSelect" onchange="triCategorie()">
-            <option value="category" selected>Catégories</option>
-            <option value="price_asc" >Prix croissant</option>
-            <option value="price_desc">Prix décroissant</option>
-            <option value="name_asc">Nom A-Z</option>
-            <option value="name_desc">Nom Z-A</option>
-        </select>
-        </div>
-      </div>
-    </section>
+  {% include 'home/filtres.html' %}
 
     <script>
       // Structure de données pour les sous-catégories
@@ -108,20 +85,7 @@
 
       document.getElementById('subcategorySelect').addEventListener('change', filterProducts);
 
-      function filterProducts() {
-        const selectedCategory = document.getElementById('categorySelect').value;
-        const selectedSubcategory = document.getElementById('subcategorySelect').value;
-
-        document.querySelectorAll('.produit-cadre').forEach(product => {
-          const productCategory = product.dataset.category;
-          const productSubcategory = product.dataset.subcategory || '';
-          
-          const categoryMatch = !selectedCategory || (productCategory === selectedCategory);
-          const subcategoryMatch = !selectedSubcategory || (productSubcategory === selectedSubcategory);
-          
-          product.style.display = (categoryMatch && subcategoryMatch) ? 'block' : 'none';
-        });
-      }
+      
     </script>
     
     <section class="boutique">
