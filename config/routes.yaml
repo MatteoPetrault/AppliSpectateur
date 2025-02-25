@@ -12,3 +12,10 @@ connexion:
 checkout:
     path: /checkout
     controller: App\Controller\CheckoutController::index
+commande:
+    path: /commande
+    controller: App\Controller\CommandeController::index
+commande_statut:
+    path: /commande/statut/{id}
+    controller: App\Controller\CommandeController::statut
+    methods: GET

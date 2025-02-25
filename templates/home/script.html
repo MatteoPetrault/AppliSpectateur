@@ -277,7 +277,7 @@
                 });
             });
 
-            // Envoi de la requête (adapter l'URL de l'endpoint si besoin)
+            // Envoi de la requête
             fetch('/checkout', {
                 method: 'POST',
                 headers: {
@@ -292,8 +292,9 @@
                         // Réinitialiser le panier et masquer le formulaire
                         document.getElementById('cartItemsContainer').innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
                         document.getElementById('deliveryFormContainer').style.display = 'none';
-                        alert('Commande validée avec succès !');
                         bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+
+                        window.location.href = '/commande';
                     } else {
                         alert('Erreur : ' + data.error);
                     }
@@ -303,6 +304,7 @@
                     alert('Une erreur est survenue lors de la validation du panier.');
                 });
         }
+
 
         function updateQuantityMenu(produitId, change) {
             const input = document.getElementById(`quantite-menu-${produitId}`);

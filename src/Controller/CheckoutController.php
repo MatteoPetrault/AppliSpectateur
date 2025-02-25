@@ -1,6 +1,5 @@
 <?php
 // src/Controller/CheckoutController.php
-// src/Controller/CheckoutController.php
 
 namespace App\Controller;
 
@@ -76,8 +75,8 @@ class CheckoutController extends AbstractController
                 );
 
                 if (!$tailleId) {
-                    return new JsonResponse([
-                        'success' => false,
+                    return new JsonResponse([ 
+                        'success' => false, 
                         'error' => "Aucune taille trouvée pour le produit ID $produitId"
                     ], 400);
                 }
@@ -140,6 +139,9 @@ class CheckoutController extends AbstractController
                     'prix'         => $line['prix'],
                 ]);
             }
+
+            // Stocker l'ID de la commande dans la session pour l'utiliser dans d'autres contrôleurs
+            $request->getSession()->set('commande_id', $commandeId);
 
             return new JsonResponse(['success' => true, 'orderNumber' => $orderNumber]);
         } catch (\Exception $e) {

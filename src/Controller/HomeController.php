@@ -95,7 +95,7 @@ class HomeController extends AbstractController
             $commande->setHeure(new \DateTime()); // Current time
 
             // Set status
-            $statut = $this->entityManager->getRepository(Statut::class)->findOneBy(['libelle' => 'En cours de préparation']);
+            $statut = $this->entityManager->getRepository(Statut::class)->findOneBy(['libelle' => 'Enregistrée']);
             if (!$statut) {
                 return new JsonResponse(['success' => false, 'message' => 'Statut non trouvé'], 400);
             }
