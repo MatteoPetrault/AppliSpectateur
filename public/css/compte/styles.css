@@ -1,0 +1,88 @@
+/* Style général */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f4f4f4;
+    flex-direction: column;
+    padding-top: 50px;
+}
+
+.auth-container {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+}
+
+.auth-form h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
+}
+
+.auth-form p {
+    font-size: 16px;
+    color: #555;
+}
+
+.auth-form label {
+    display: block;
+    margin: 15px 0 5px;
+    font-weight: bold;
+    text-align: left;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.btn {
+    display: inline-block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.btn-dark {
+    background: #343a40;
+    color: white;
+}
+
+.btn-dark:hover {
+    background: #23272b;
+}

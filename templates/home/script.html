@@ -256,6 +256,15 @@
                 cart: []
             };
 
+            // Récupération de l'ID utilisateur si connecté
+            const userIdElement = document.getElementById('userId');
+            if (userIdElement) {
+                formData.user.id = userIdElement.value;
+            } else {
+                formData.user.prenom = document.getElementById('prenom').value;
+                formData.user.nom = document.getElementById('nom').value;
+            }
+
             const userId = document.getElementById('userId');
             if (userId) {
                 formData.user = {
@@ -267,7 +276,6 @@
                     nom: document.getElementById('nom').value
                 };
             }
-
             cartItems.forEach(item => {
                 const [_, produitId, taille] = item.id.split('-');
                 formData.cart.push({

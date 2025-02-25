@@ -1,0 +1,133 @@
+/* Styles généraux */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    padding: 30px;
+}
+
+.compte-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 50px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+h2 {
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 22px;
+}
+
+.form-group input {
+    padding: 14px;
+    font-size: 22px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+button {
+    padding: 16px;
+    font-size: 22px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.btn-supprimer {
+    background-color: #ff4444;
+    margin-top: 30px;
+    font-size: 22px;
+}
+
+.btn-supprimer:hover {
+    background-color: #cc0000;
+}
+
+/* Messages d'erreur */
+.alert {
+    padding: 14px;
+    margin-top: 14px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.alert-danger {
+    background-color: #ffebeb;
+    color: #d9534f;
+    border: 1px solid #d9534f;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .compte-container {
+        padding: 30px;
+    }
+
+    h2 {
+        font-size: 26px;
+    }
+
+    button {
+        font-size: 20px;
+    }
+}
+/* Ajouts dans le fichier CSS */
+.password-change {
+    border-left: 4px solid #007bff;
+    padding-left: 1rem;
+    margin: 1rem 0;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin: 1rem 0;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin: 1rem 0;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}

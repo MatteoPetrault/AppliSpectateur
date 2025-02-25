@@ -45,6 +45,12 @@ class Commande
     #[ORM\OneToMany(targetEntity: LigneCommande::class, mappedBy: 'commande')]
     private Collection $ligneCommandes;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $note_avis = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $commentaire_avis = null;
+
     public function __construct()
     {
         $this->ligneCommandes = new ArrayCollection();
@@ -158,6 +164,30 @@ class Commande
                 $ligneCommande->setCommande(null);
             }
         }
+        return $this;
+    }
+
+    public function getNoteAvis(): ?int
+    {
+        return $this->note_avis;
+    }
+
+    public function setNoteAvis(?int $note_avis): static
+    {
+        $this->note_avis = $note_avis;
+
+        return $this;
+    }
+
+    public function getCommentaireAvis(): ?string
+    {
+        return $this->commentaire_avis;
+    }
+
+    public function setCommentaireAvis(?string $commentaire_avis): static
+    {
+        $this->commentaire_avis = $commentaire_avis;
+
         return $this;
     }
 }

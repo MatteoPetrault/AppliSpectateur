@@ -1,0 +1,16 @@
+{% block stylesheets %} 
+    <link rel="stylesheet" href="{{ asset('css/compte/styles.css') }}">
+{% endblock %}
+
+<div class="auth-container">
+    <form action="{{ path('confirmation_debloquer', {'email': email}) }}" method="POST" class="auth-form">
+        <h2>Confirmer la réactivation</h2>
+        <input type="hidden" name="email" value="{{ email }}">
+        <input type="hidden" name="confirmation" value="oui">
+        
+        <p>Êtes-vous sûr de vouloir réactiver votre compte ?</p>
+        
+        <button type="submit" class="btn btn-success">OUI</button>
+        <a href="{{ path('connexion') }}" class="btn btn-danger">NON</a>
+    </form>
+</div>

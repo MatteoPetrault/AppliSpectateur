@@ -14,42 +14,34 @@ class CheckoutController extends AbstractController
     /**
      * @Route("/checkout", name="checkout", methods={"POST"})
      */
-    public function index(Request $request, Connection $connection): JsonResponse
-    {
-        try {
-            // Décodage des données JSON envoyées depuis le front-end
-            $data = json_decode($request->getContent(), true);
-            if (!$data) {
-                return new JsonResponse(['success' => false, 'error' => 'JSON invalide'], 400);
+// Dans la méthode index
+public function index(Request $request, Connection $connection): JsonResponse
+{
+    try {
+        $data = json_decode($request->getContent(), true);
+        
+        // Gestion du client
+        $clientId = null;
+        if (!empty($data['user']['id'])) {
+            // Vérifier que le client existe
+            $client = $connection->fetchAssociative('SELECT * FROM client WHERE id = ?', [$data['user']['id']]);
+            if (!$client) {
+                return new JsonResponse(['success' => false, 'error' => 'Client non trouvé'], 400);
             }
-
-            // Gestion du client (si connecté, récupérer les informations; sinon, demander nom/prénom)
-            $clientId = null;
-            $prenom = $nom = $email = null;
-
-            // Si l'utilisateur est connecté, on récupère ses informations
-            if (isset($data['user']['id']) && !empty($data['user']['id'])) {
-                $clientId = $data['user']['id'];
-                $prenom = $data['user']['prenom'];
-                $nom = $data['user']['nom'];
-                $email = $data['user']['email'] ?? null;  // email est disponible si connecté
-            } else {
-                // Si non connecté, on demande nom et prénom
-                $prenom = $data['user']['prenom'] ?? null;
-                $nom  = $data['user']['nom'] ?? null;
-                
-                // Si nom et prénom manquants, retour erreur
-                if (!$prenom || !$nom) {
-                    return new JsonResponse(['success' => false, 'error' => 'Informations client manquantes'], 400);
-                }
-
-                // Création d'un client en base de données si non connecté
-                $connection->insert('client', [
-                    'nom'    => $nom,
-                    'prenom' => $prenom,
-                ]);
-                $clientId = $connection->lastInsertId();  // Récupérer l'ID du client créé
+            $clientId = $client['id'];
+        } else {
+            // Création d'un client temporaire
+            if (empty($data['user']['nom']) || empty($data['user']['prenom'])) {
+                return new JsonResponse(['success' => false, 'error' => 'Nom et prénom requis'], 400);
             }
+            
+            $connection->insert('client', [
+                'nom' => $data['user']['nom'],
+                'prenom' => $data['user']['prenom'],
+                'mdp' => bin2hex(random_bytes(8)) // Génère un mot de passe aléatoire
+            ]);
+            $clientId = $connection->lastInsertId();
+        }
 
             // Vérification du panier
             $cartItems = $data['cart'] ?? [];

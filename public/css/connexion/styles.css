@@ -91,3 +91,51 @@ h1 {
         font-size: 16px;
     }
 }
+
+/* Styles pour les messages d'erreur */
+.alert {
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.alert-danger {
+    background-color: #ffebeb;
+    color: #d9534f;
+    border: 1px solid #d9534f;
+}
+
+.alert-danger.email-exists {
+    background-color: #ffcccc;
+    color: #b30000;
+    border: 1px solid #b30000;
+}
+/* Styles pour les erreurs spécifiques */
+.alert-email-exists {
+    background-color: #ffcccc;
+    border-color: #b30000;
+    color: #b30000;
+}
+
+.alert-login-exists {
+    background-color: #ffe6cc;
+    border-color: #cc6600;
+    color: #cc6600;
+}
+
+.alert-password-error {
+    background-color: #fff3cd;
+    border-color: #856404;
+    color: #856404;
+}
+
+/* Style pour l'erreur client-side du mot de passe */
+.invalid-feedback {
+    display: none;
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}

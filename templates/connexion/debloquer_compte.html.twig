@@ -1,0 +1,15 @@
+{% block stylesheets %} 
+    <link rel="stylesheet" href="{{ asset('css/compte/styles.css') }}">
+{% endblock %}
+
+<div class="auth-container">
+    <form action="{{ path('debloquer_compte') }}" method="POST" class="auth-form">
+        <h2>Débloquer le compte</h2>
+        <input type="hidden" name="email" value="{{ email }}">
+        
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" name="password" required>
+        
+        <button type="submit" class="btn btn-dark">Vérifier</button>
+    </form>
+</div>
