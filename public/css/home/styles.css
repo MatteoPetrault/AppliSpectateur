@@ -1,65 +1,65 @@
 /* Styles généraux */
+:root {
+    --rouge-cinema: #c41e3a;
+    --noir-cinema: #0a0a0a;
+    --blanc: #ffffff;
+    --or: #ffd700;
+}
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background-color: #f4f4f4; /* Si vous préférez un fond entièrement blanc, remplacer par var(--blanc) */
 }
-.title_fauteuil {
-    margin: auto
-  }
 header {
     background-color: #333;
-    color: white;
     padding: 10px 0;
     text-align: center;
 }
+/* Titre adapté pour le cinéma : "Le Fauteuil" en blanc et "Rouge" en rouge-cinema */
+.title_fauteuil {
+    margin: auto;
+    color: var(--blanc);
+}
+.title_fauteuil .cinema-rouge {
+    color: var(--rouge-cinema);
+}
+
 .nav-link {
     display: flex;
     align-items: center;
     justify-content: flex-start;
 }
-
 .nav-link img {
-    margin-left: 300%!important;  /* Applique un décalage à l'image */
+    margin-left: 300%!important;
 }
-
-
-
 header h1 {
     margin: 0;
 }
-
 nav ul {
     list-style-type: none;
     padding: 0;
 }
-
 nav ul li {
     display: inline;
     margin: 0 15px;
 }
-
 nav ul li a {
     color: white;
     text-decoration: none;
 }
-
 main {
     padding: 20px;
 }
-
 .boutique {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 15px;
 }
-
 .boutique h2 {
     text-align: center;
     margin-bottom: 20px;
 }
-
 .produits-liste {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -68,9 +68,8 @@ main {
     width: 100%;
     margin: 0 auto;
 }
-
 .produit-cadre {
-    background-color: white;
+    background-color: var(--blanc);
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 12px;
@@ -80,11 +79,16 @@ main {
     max-width: 100%;
     overflow: hidden;
 }
-
-.produit-image {
-    max-width: 60%;
-    height: auto;
+/* Uniformisation et centrage des images */
+.produit-image, .menu-image {
+    display: block;
     margin: 0 auto;
+    /*width: 80%;       /* ou 80%, selon vos préférences */
+    max-width: 100%;   /* s’assure qu’elle ne dépasse jamais 100% du conteneur */
+    height: 150px;      /*hauteur fixe */
+    object-fit: cover; /* rogne l'image pour remplir le cadre */
+    border-radius: 10px;
+    /*border: 2px solid var(--rouge-cinema);*/
 }
 
 .produit-nom {
@@ -95,14 +99,12 @@ main {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
 .produit-prix {
     font-size: 0.9em;
     color: #333;
     font-weight: bold;
     margin: 8px 0;
 }
-
 .produit-bouton {
     margin-top: 10px;
     padding: 10px 15px;
@@ -114,38 +116,31 @@ main {
     font-size: 0.9em;
     width: 95%;
 }
-
 .produit-bouton:hover {
     background-color: #0056b3;
 }
-
 /* Responsive tablette */
 @media (min-width: 768px) {
     .produits-liste {
         grid-template-columns: repeat(3, 1fr);
         gap: 20px;
     }
-    
     .produit-cadre {
         padding: 15px;
     }
-    
     .produit-nom {
         font-size: 1.1em;
     }
-    
     .produit-bouton {
         font-size: 1em;
     }
 }
-
 /* Responsive desktop */
 @media (min-width: 1024px) {
     .produits-liste {
         grid-template-columns: repeat(4, 1fr);
     }
 }
-
 /* Mobile */
 @media (max-width: 767px) {
     .produits-liste {
@@ -153,20 +148,16 @@ main {
         gap: 8px;
         padding: 0 5px;
     }
-    
     .produit-cadre {
         padding: 8px;
         min-width: 0;
     }
-    
     .produit-image {
         max-width: 80%;
     }
-    
     .produit-nom {
         font-size: 0.8em;
     }
-    
     .taille-select {
         font-size: 0.8em !important;
         width: 95% !important;
@@ -174,54 +165,46 @@ main {
         padding: 4px !important;
     }
 }
-
 /* Très petits écrans */
 @media (max-width: 380px) {
     .produits-liste {
         grid-template-columns: 1fr;
         gap: 6px;
     }
-    
     .produit-bouton {
         font-size: 0.7em;
         padding: 8px 10px;
     }
 }
-
 /* Contrôles quantité */
 .quantity-wrapper .input-group {
     max-width: 150px;
     margin: 0 auto;
 }
-
 .quantity-wrapper .form-control {
     padding: 4px;
     font-size: 0.9em;
 }
-
 .quantity-wrapper .btn {
     padding: 4px 8px;
 }
-
 /* Filtres */
 .filtres .form-select {
     width: 100%;
     margin-bottom: 1rem;
 }
-
 /* Panier */
 #cartPopup {
     display: none;
     position: fixed;
     top: 50px;
     right: 50px;
-    background: #fff;
+    background: var(--blanc);
     border: 1px solid #ccc;
     padding: 20px;
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
-
 .nav-cart a {
     font-size: 1.5em;
     text-decoration: none;
@@ -244,12 +227,10 @@ main {
     align-items: center;
     gap: 10px;
 }
-
 .cart-notification:hover {
     background: #218838;
     transform: translateX(-50%) scale(1.05);
 }
-
 .notification-content a {
     color: white;
     text-decoration: underline;
@@ -259,31 +240,21 @@ main {
     display: grid;
     gap: 20px;
     padding: 15px;
-  }
-  
-  .menu-cadre {
+}
+.menu-cadre {
     border: 1px solid #ddd;
     padding: 15px;
     border-radius: 8px;
-    background: white;
-  }
-  
-  .menu-image {
-    max-width: 200px;
-    height: auto;
-    margin-bottom: 10px;
-  }
-  
-  .reduction {
+    background: var(--blanc);
+}
+.reduction {
     color: #28a745;
     font-weight: bold;
     font-size: 1.2em;
-  }
-  
-  .menu-options {
+}
+.menu-options {
     margin: 15px 0;
-  }
-  
-  .famille {
+}
+.famille {
     margin-bottom: 10px;
-  }
+}
