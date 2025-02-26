@@ -19,16 +19,38 @@
                 document.getElementById('signup-form').style.display = 'block';
                 document.getElementById('toggle-to-login').style.display = 'block';
                 document.getElementById('toggle-to-signup').style.display = 'none';
+                
+                // Supprime les messages d'erreur présents dans le formulaire d'inscription
+                let errorMessages = document.querySelectorAll('#signup-form .alert-danger');
+                errorMessages.forEach(function(el) {
+                    el.remove();
+                });
             }
         }
+
     </script>
 </head>
 <body>
     <div class="container">
+
         <h1>Bienvenue sur l'Application</h1>
+        {% if app.session.flashbag.has('error') %}
+            {% for message in app.session.flashbag.get('error') %}
+                <div class="alert alert-danger" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
         
         <!-- Formulaire de connexion -->
         <div id="login-form" class="auth-container" style="display: {{ app.request.get('form') == 'signup' ? 'none' : 'block' }};">
+            {% if app.session.flashbag.has('error') %}
+                {% for message in app.session.flashbag.get('error') %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
             <form action="{{ path('connexion') }}" method="POST" class="auth-form">
                 <h2>Connexion</h2>
                 <input type="hidden" name="action" value="login">
@@ -39,7 +61,7 @@
                 <label for="password">Mot de passe</label>
                 <input type="password" id="password" name="password" required>
 
-                <button type="submit">Se connecter</button>
+                <button  type="submit"  class="btn btn-danger">Se connecter</button>
             </form>
             
             <div class="options">
@@ -47,6 +69,7 @@
                 <a href="{{ path('home') }}">Continuer sans compte</a>
             </div>
         </div>
+
 
         <!-- Formulaire de création de compte -->
         <div id="signup-form" class="auth-container" style="display: {{ app.request.get('form') == 'signup' ? 'block' : 'none' }};">
@@ -83,7 +106,7 @@
                 <input type="password" id="password_create" name="password_create" required>
                 <div id="password-client-error" class="invalid-feedback"></div>
 
-                <button type="submit">Créer le compte</button>
+                <button class="btn btn-danger" type="submit" >Créer le compte</button>
             </form>
 
             <div class="options">

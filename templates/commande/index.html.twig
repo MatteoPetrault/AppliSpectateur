@@ -5,159 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
     <title>Suivi de commande Cinéma</title>
-    <style>
-        body {
-            font-family: 'Oswald', sans-serif;
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-
-        .tracker-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .progress-bar {
-            height: 10px;
-            background: #eee;
-            border-radius: 5px;
-            margin: 2rem 0;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #E31837;
-            width: 0;
-            transition: width 0.5s ease, background-color 0.3s ease;
-        }
-
-        .status-message {
-            text-align: center;
-            font-size: 1.5rem;
-            margin: 1rem 0;
-            padding: 1rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .status-steps {
-            display: flex;
-            justify-content: space-between;
-            margin: 2rem 0;
-            position: relative;
-        }
-
-        .status-step {
-            text-align: center;
-            z-index: 1;
-            width: 20%;
-        }
-
-        .step-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .time-estimation {
-            text-align: center;
-            color: #666;
-            font-style: italic;
-            margin-top: 1rem;
-        }
-
-        .active-step {
-            color: #E31837;
-            transform: scale(1.1);
-        }
-
-        .pulse {
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        .payment-notice {
-            text-align: center;
-            padding: 1rem;
-            margin: 1rem 0;
-            background: #fff3f3;
-            border: 2px solid #E31837;
-            border-radius: 8px;
-            animation: pulseBorder 1.5s infinite;
-        }
-
-        @keyframes pulseBorder {
-            0% { border-color: #E31837; }
-            50% { border-color: #ff7b7b; }
-            100% { border-color: #E31837; }
-        }
-        .feedback-section {
-            margin-top: 2rem;
-            text-align: center;
-        }
-
-        .star-rating {
-            font-size: 2rem;
-            color: #ccc;
-            cursor: pointer;
-        }
-
-        .star-rating span {
-            transition: color 0.2s;
-        }
-
-        .star-rating span:hover,
-        .star-rating span:hover ~ span {
-            color: #ffcc00;
-        }
-
-        textarea {
-            width: 100%;
-            height: 100px;
-            margin-top: 1rem;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-        }
-
-        button {
-            margin-top: 1rem;
-            padding: 10px 20px;
-            background-color: #E31837;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #c4122f;
-        }
-        body.dark-mode {
-            background: #333;
-            color: #fff;
-        }
-
-        .dark-mode .tracker-container {
-            background: #444;
-            color: #fff;
-        }
-
-        .dark-mode .payment-notice {
-            background: #555;
-            border-color: #E31837;
-            color: #fff;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/commande/styles.css') }}">
 </head>
 <body>
     <div class="tracker-container">
@@ -200,131 +48,28 @@
         </div>
         <button id="darkModeToggle" onclick="toggleDarkMode()">Mode Cinéma 🎥</button>
     </div>
-
+      {% include 'commande/script.html' %}
     <script>
-        const statusMap = {
-            'Enregistrée': {progress: 25, step: 1, emoji: '📋'},
-            'En cours de préparation': {progress: 50, step: 2, emoji: '🍿'},
-            'En attente de récupération': {progress: 75, step: 3, emoji: '🎬'},
-            'Terminé': {progress: 100, step: 4, emoji: '🎉'},
-            'Annulé': {progress: 0, step: 0, emoji: '❌'}
-        };
+    // Bloquer la navigation par swipe sur iOS/Android
+    document.addEventListener('touchstart', function(e) {
+        this.startX = e.touches[0].clientX;
+        this.startY = e.touches[0].clientY;
+    }, { passive: false });
 
-        function updateInterface(data) {
-            const statusInfo = statusMap[data.statut];
-            
-            document.getElementById('progress').style.width = statusInfo.progress + '%';
-            
-            document.querySelectorAll('.status-step').forEach((step, index) => {
-                step.classList.toggle('active-step', index < statusInfo.step);
-                step.querySelector('.step-icon').classList.toggle('pulse', index + 1 === statusInfo.step);
-            });
-
-            const statusMessage = document.getElementById('statusMessage');
-            statusMessage.innerHTML = `${statusInfo.emoji} ${getMessage(data.statut)}`;
-
-            // Ajout du message de paiement uniquement quand la commande est prête
-            const paymentNotice = document.getElementById('paymentNotice');
-            if(data.statut === 'En attente de récupération') {
-                paymentNotice.innerHTML = `
-                    Nom : ${data.nom}<br>
-                    Prénom : ${data.prenom}<br>
-                    Numéro de commande : ${data.numero_commande}
-                    <div class="payment-notice">
-                        <strong>🚨 Votre commande est prête !</strong><br>
-                        Merci de venir la récupérer et régler au comptoir en fournissant votre nom,<br>
-                         prénom et numéro de commande.
-                    </div>
-                `;
-            } else {
-                paymentNotice.innerHTML = '';
-            }
+    document.addEventListener('touchmove', function(e) {
+        if (Math.abs(e.touches[0].clientX - this.startX) > 
+            Math.abs(e.touches[0].clientY - this.startY)) {
+            e.preventDefault();
         }
+    }, { passive: false });
 
-        function getMessage(statut) {
-            switch(statut) {
-                case 'Enregistrée': return 'Votre commande est enregistrée';
-                case 'En cours de préparation': return 'Préparation de vos produits en cours';
-                case 'En attente de récupération': return 'Votre commande est prête !';
-                case 'Terminé': return 'Bon film ! 🎥';
-                case 'Annulé': return 'Commande annulée';
-                default: return 'Statut inconnu';
-            }
-        }
-
-        setInterval(() => {
-            fetch("{{ path('commande_statut', {'id': commande.id}) }}")
-                .then(response => response.json())
-                .then(data => updateInterface(data))
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    document.getElementById('statusMessage').innerHTML = '⚠️ Problème de connexion';
-                });
-        }, 10000);
-
-        updateInterface({statut: "{{ statut }}"});
-
-        let currentRating = 0;
-
-        function rate(rating) {
-            currentRating = rating;
-            const stars = document.querySelectorAll('.star-rating span');
-            stars.forEach((star, index) => {
-                star.style.color = index < rating ? '#ffcc00' : '#ccc';
-            });
-        }
-
-        function submitFeedback() {
-            const comment = document.getElementById('comment').value;
-            if (currentRating > 0) {
-                // Préparer les données à envoyer
-                const feedbackData = {
-                    note: currentRating,
-                    commentaire: comment
-                };
-
-                // Envoyer les données au serveur
-                fetch("{{ path('enregistrer_avis', {'id': commande.id}) }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest' // Pour indiquer que c'est une requête AJAX
-                    },
-                    body: JSON.stringify(feedbackData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert("Merci pour votre avis !");
-                        // Masquer la section feedbackSection
-                        document.getElementById('feedbackSection').style.display = 'none';
-                    } else {
-                        alert(data.message); // Afficher le message d'erreur retourné par le serveur
-                        if (data.message === 'Un avis a déjà été soumis pour cette commande.') {
-                            // Masquer la section feedbackSection si un avis existe déjà
-                            document.getElementById('feedbackSection').style.display = 'none';
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    alert("Une erreur s'est produite lors de l'envoi de votre avis.");
-                });
-            } else {
-                alert("Veuillez donner une note avant de soumettre.");
-            }
-        }
-
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            const button = document.getElementById('darkModeToggle');
-            if (document.body.classList.contains('dark-mode')) {
-                button.textContent = 'Mode Lumière ☀️';
-            } else {
-                button.textContent = 'Mode Cinéma 🎥';
-            }
-        }
-
+    // Bloquer l'overscroll horizontal
+    document.body.style.overscrollBehaviorX = 'none';
     </script>
+
+    <style>
+
+    </style>
 </body>
+
 </html>

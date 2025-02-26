@@ -32,12 +32,10 @@ class HomeController extends AbstractController
         CategorieRepository $categorieRepository,
         PossedeRepository $possedeRepository
     ): Response {
-        // Récupération des données nécessaires
         $categories = $categorieRepository->findAll();
         $allPossede = $possedeRepository->findAll();
         $subcategoriesByCategory = [];
 
-        // Construction de la structure de sous-catégories par catégorie
         foreach ($allPossede as $possede) {
             $category = $possede->getCategorie();
             if ($category) {
@@ -46,12 +44,16 @@ class HomeController extends AbstractController
             }
         }
 
+        // Récupérer uniquement les produits en ligne
+        $produits = $produitRepository->findBy(['en_ligne' => 1]);
+
         return $this->render('home/index.html.twig', [
-            'produits' => $produitRepository->findAllWithTailleAndPrix(),
+            'produits' => $produits,
             'categories' => $categories,
             'subcategoriesByCategory' => $subcategoriesByCategory
         ]);
     }
+
 
     /**
      * @Route("/product/get-price", name="product_get_price", methods={"GET"})

@@ -1,110 +1,153 @@
-{% block stylesheets %}
-    <link rel="stylesheet" href="{{ asset('css/mon_compte/styles.css') }}">
-{% endblock %}
-
-{% block content %}
-<div class="compte-container">
-    <h2>Modifier mon compte</h2>
-    
-    <form method="post" id="updateForm">
-        <input type="hidden" name="action" value="update">
-        
-        <div class="form-group">
-            <label>Nom</label>
-            <input type="text" name="nom" value="{{ client.nom }}" class="form-control" required>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Modifier mon compte</title>
+  {% block stylesheets %}
+    {# Bootstrap et vos styles personnalisés #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  {% endblock %}
+</head>
+<body>
+  {% block content %}
+  <div class="container my-4">
+    <div class="row justify-content-center">
+      {# La colonne s'étend sur 10 colonnes en md et 8 en lg pour une card plus large #}
+      <div class="col-12 col-md-10 col-lg-8">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Modifier mon compte</h2>
+            <button type="button" class="btn btn-light btn-sm" onclick="window.history.back();">Retour</button>
+          </div>
+          <div class="card-body">
+            <form method="post" id="updateForm">
+              <input type="hidden" name="action" value="update">
+              
+              <div class="mb-3">
+                <label for="nom" class="form-label">Nom</label>
+                <input type="text" id="nom" name="nom" value="{{ client.nom }}" class="form-control" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="prenom" class="form-label">Prénom</label>
+                <input type="text" id="prenom" name="prenom" value="{{ client.prenom }}" class="form-control" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" name="email" value="{{ client.email }}" class="form-control" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="login" class="form-label">Login</label>
+                <input type="text" id="login" name="login" value="{{ client.login }}" class="form-control" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="old_password" class="form-label">Ancien mot de passe *</label>
+                <input type="password" id="old_password" name="old_password" class="form-control" required>
+              </div>
+              
+              <button type="button" id="togglePasswordChange" class="btn btn-secondary mb-3">
+                Modifier mon mot de passe
+              </button>
+              
+              <div class="password-change" style="display:none;">
+                <div class="mb-3">
+                  <label for="new_password" class="form-label">Nouveau mot de passe</label>
+                  <input type="password" id="new_password" name="new_password" class="form-control">
+                </div>
+                <div class="mb-3">
+                  <label for="confirm_password" class="form-label">Confirmation du nouveau mot de passe</label>
+                  <input type="password" id="confirm_password" name="confirm_password" class="form-control">
+                </div>
+              </div>
+              
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Mettre à jour</button>
+              </div>
+            </form>
+            
+            <hr>
+            
+            <form action="{{ path('supprimer_compte') }}" method="post" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer votre compte ?');">
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-danger">Supprimer mon compte</button>
+              </div>
+            </form>
+            
+            <div id="messageContainer" class="mt-3"></div>
+          </div>
         </div>
-        
-        <div class="form-group">
-            <label>Prénom</label>
-            <input type="text" name="prenom" value="{{ client.prenom }}" class="form-control" required>
-        </div>
-        
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" name="email" value="{{ client.email }}" class="form-control" required>
-        </div>
-        
-        <div class="form-group">
-            <label>Login</label>
-            <input type="text" name="login" value="{{ client.login }}" class="form-control" required>
-        </div>
+      </div>
+    </div>
+  </div>
+  {% endblock %}
 
-        <div class="form-group">
-            <label>Ancien mot de passe *</label>
-            <input type="password" name="old_password" class="form-control" required>
-        </div>
-
-        <button type="button" id="togglePasswordChange" class="btn btn-secondary mb-3">Modifier mon mot de passe</button>
-
-        <div class="password-change" style="display:none;">
-            <div class="form-group">
-                <label>Nouveau mot de passe</label>
-                <input type="password" name="new_password" class="form-control">
-            </div>
-
-            <div class="form-group">
-                <label>Confirmation du nouveau mot de passe</label>
-                <input type="password" name="confirm_password" class="form-control">
-            </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Mettre à jour</button>
-    </form>
-
-    <form action="{{ path('supprimer_compte') }}" method="post" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer votre compte ?');">
-        <button type="submit" class="btn btn-supprimer">Supprimer mon compte</button>
-    </form>
-
-    <div id="messageContainer"></div>
-</div>
-
-<script>
-document.getElementById('togglePasswordChange').addEventListener('click', function() {
-    document.querySelectorAll('.password-change').forEach(el => {
-        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.getElementById('togglePasswordChange').addEventListener('click', function() {
+      var passwordChangeDiv = document.querySelector('.password-change');
+      passwordChangeDiv.style.display = passwordChangeDiv.style.display === 'none' ? 'block' : 'none';
     });
-});
 
-document.getElementById('updateForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    const messageContainer = document.getElementById('messageContainer');
-    messageContainer.innerHTML = '';
+    document.getElementById('updateForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const messageContainer = document.getElementById('messageContainer');
+      messageContainer.innerHTML = '';
 
-    try {
+      try {
         const response = await fetch('{{ path('mon_compte') }}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
         });
 
         const data = await response.json();
-        
+
         if (data.success) {
-            messageContainer.innerHTML = `
-                <div class="alert alert-success">
-                    ${data.message}
-                    <div class="mt-2">
-                        <a href="{{ path('home') }}" class="btn btn-sm btn-success">Retour à la boutique</a>
-                    </div>
-                </div>
-            `;
-            this.reset();
+          messageContainer.innerHTML = `
+            <div class="alert alert-success">
+              ${data.message}
+              <div class="mt-2">
+                <a href="{{ path('home') }}" class="btn btn-sm btn-success">Retour à la boutique</a>
+              </div>
+            </div>
+          `;
+          this.reset();
         } else {
-            let errorHTML = `<div class="alert alert-danger">${data.message}</div>`;
-            if (data.errors) {
-                errorHTML += data.errors.map(error => `
-                    <div class="text-danger mt-2">${error.message}</div>
-                `).join('');
-            }
-            messageContainer.innerHTML = errorHTML;
+          let errorHTML = `<div class="alert alert-danger">${data.message}</div>`;
+          if (data.errors) {
+            errorHTML += data.errors.map(error => `
+              <div class="text-danger mt-2">${error.message}</div>
+            `).join('');
+          }
+          messageContainer.innerHTML = errorHTML;
         }
-    } catch (error) {
+      } catch (error) {
         console.error('Erreur:', error);
         messageContainer.innerHTML = `<div class="alert alert-danger">Une erreur inattendue est survenue</div>`;
-    }
-});
-</script>
-{% endblock %}
+      }
+    });
+
+    // Empêcher le glissement vers la droite pour revenir à la page précédente
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener('touchstart', function(event) {
+      touchStartX = event.touches[0].clientX;
+    });
+
+    document.addEventListener('touchend', function(event) {
+      touchEndX = event.changedTouches[0].clientX;
+      if (touchEndX - touchStartX > 50) { // Seuil de glissement vers la droite
+        event.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>

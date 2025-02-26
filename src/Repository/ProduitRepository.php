@@ -28,4 +28,13 @@ class ProduitRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+    public function findAllEnLigne()
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.en_ligne = :en_ligne')
+            ->setParameter('en_ligne', 1)
+            ->getQuery()
+            ->getResult();
+    }
+
 }

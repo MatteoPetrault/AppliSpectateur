@@ -2,7 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- pas de zoom possible sur la page home -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Page d'accueil</title>
   <link rel="stylesheet" href="{{ asset('css/home/styles.css') }}">
   <!-- Bootstrap CSS (version 5) -->
@@ -86,8 +87,6 @@
       });
 
       document.getElementById('subcategorySelect').addEventListener('change', filterProducts);
-
-      
     </script>
     
     <section class="boutique">
@@ -95,40 +94,42 @@
     <div class="produits-liste">
       {# Boucle pour les produits normaux (hors catégorie Menu) #}
       {% for produit in produits %}
-        {% if produit.categorie.id != 7 %}
-          <div class="produit-cadre" 
-              data-category="{{ produit.categorie.id }}"
-              data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
-            <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
-            <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
+        {% if produit.enLigne %}
+          {% if produit.categorie.id != 7 %}
+            <div class="produit-cadre" 
+                data-category="{{ produit.categorie.id }}"
+                data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
+              <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
+              <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
 
-            {% set nbTailles = produit.avoirs|length %}
-            {% if nbTailles == 1 %}
-              {% set seuleTaille = produit.avoirs|first %}
-              <p class="produit-prix">Prix : {{ seuleTaille.taille.unite }} {{ seuleTaille.prix }}€</p>
-            {% else %}
-              <label for="taille-{{ produit.id }}">Taille :</label>
-              <select id="taille-{{ produit.id }}" class="taille-select form-select">
-                {% for avoir in produit.avoirs %}
-                  <option value="{{ avoir.taille.unite }}">{{ avoir.taille.unite }} - {{ avoir.prix }}€</option>
-                {% endfor %}
-              </select>
-            {% endif %}
+              {% set nbTailles = produit.avoirs|length %}
+              {% if nbTailles == 1 %}
+                {% set seuleTaille = produit.avoirs|first %}
+                <p class="produit-prix">Prix : {{ seuleTaille.taille.unite }} {{ seuleTaille.prix }}€</p>
+              {% else %}
+                <label for="taille-{{ produit.id }}">Taille :</label>
+                <select id="taille-{{ produit.id }}" class="taille-select form-select">
+                  {% for avoir in produit.avoirs %}
+                    <option value="{{ avoir.taille.unite }}">{{ avoir.taille.unite }} - {{ avoir.prix }}€</option>
+                  {% endfor %}
+                </select>
+              {% endif %}
 
-            <div class="quantity-wrapper">
-              <label for="quantite-{{ produit.id }}">Quantité :</label>
-              <div class="input-group" style="width: 150px;">
-                <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', -1)">-</button>
-                <input type="number" id="quantite-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
-                <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
+              <div class="quantity-wrapper">
+                <label for="quantite-{{ produit.id }}">Quantité :</label>
+                <div class="input-group" style="width: 150px;">
+                  <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', -1)">-</button>
+                  <input type="number" id="quantite-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
+                  <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
+                </div>
               </div>
-            </div>
 
-            <!-- Bouton d'ajout qui ouvre le modal de confirmation -->
-            <button class="produit-bouton btn btn-danger" onclick="openConfirmModal({{ produit.id }})">
-              Ajouter au panier
-            </button>
-          </div>
+              <!-- Bouton d'ajout qui ouvre le modal de confirmation -->
+              <button class="produit-bouton btn btn-danger" onclick="openConfirmModal({{ produit.id }})">
+                Ajouter au panier
+              </button>
+            </div>
+          {% endif %}
         {% endif %}
       {% endfor %}
     </div>
@@ -215,6 +216,12 @@
           <div id="cartItemsContainer">
             <p id="emptyCartMsg">Votre panier est vide.</p>
           </div>
+          <!-- Ajouter cette section -->
+          <div class="total-section" style="text-align: right; margin-top: 20px;">
+              <h5>Total de la commande : <span id="totalPrice">0.00€</span></h5>
+          </div>
+          
+          
           <!-- Conteneur pour le formulaire de livraison, masqué par défaut -->
           <!-- Dans la section du formulaire de livraison -->
           <div id="deliveryFormContainer" style="display: none;">
@@ -239,6 +246,12 @@
       </div>
     </div>
   </div>
+  <!-- Panier flottant -->
+  <div id="floatingCart" class="floating-cart" onclick="openCartModal()">
+    <img src="/image/panier2.png" alt="Panier" width="40" height="40">
+    <span id="floatingCartCount" class="cart-count">0</span>
+  </div>
+
 
 
   {% include 'home/cart-modal-erreur.html' %}

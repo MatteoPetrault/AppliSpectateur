@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        const statusMap = {
+            'Enregistrée': { progress: 25, step: 1, emoji: '📋' },
+            'En cours de préparation': { progress: 50, step: 2, emoji: '🍿' },
+            'En attente de récupération': { progress: 75, step: 3, emoji: '🎬' },
+            'Terminé': { progress: 100, step: 4, emoji: '🎉' },
+            'Annulé': { progress: 0, step: 0, emoji: '❌' }
+        };
+
+        function updateInterface(data) {
+            const statusInfo = statusMap[data.statut];
+
+            document.getElementById('progress').style.width = statusInfo.progress + '%';
+
+            document.querySelectorAll('.status-step').forEach((step, index) => {
+                step.classList.toggle('active-step', index < statusInfo.step);
+                step.querySelector('.step-icon').classList.toggle('pulse', index + 1 === statusInfo.step);
+            });
+
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.innerHTML = `${statusInfo.emoji} ${getMessage(data.statut)}`;
+
+            // Ajout du message de paiement uniquement quand la commande est prête
+            const paymentNotice = document.getElementById('paymentNotice');
+            if (data.statut === 'En attente de récupération') {
+                paymentNotice.innerHTML = `
+                Nom : ${data.nom}<br>
+                Prénom : ${data.prenom}<br>
+                Numéro de commande : ${data.numero_commande}
+                <div class="payment-notice">
+                    <strong>🚨 Votre commande est prête !</strong><br>
+                    Merci de venir la récupérer et régler au comptoir en fournissant votre nom,<br>
+                     prénom et numéro de commande.
+                </div>
+            `;
+            } else {
+                paymentNotice.innerHTML = '';
+            }
+        }
+
+        function getMessage(statut) {
+            switch (statut) {
+                case 'Enregistrée': return 'Votre commande est enregistrée';
+                case 'En cours de préparation': return 'Préparation de vos produits en cours';
+                case 'En attente de récupération': return 'Votre commande est prête !';
+                case 'Terminé': return 'Bon film ! 🎥';
+                case 'Annulé': return 'Commande annulée';
+                default: return 'Statut inconnu';
+            }
+        }
+
+        setInterval(() => {
+            fetch("{{ path('commande_statut', {'id': commande.id}) }}")
+                .then(response => response.json())
+                .then(data => updateInterface(data))
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    document.getElementById('statusMessage').innerHTML = '⚠️ Problème de connexion';
+                });
+        }, 10000);
+
+        updateInterface({ statut: "{{ statut }}" });
+
+        let currentRating = 0;
+
+        function rate(rating) {
+            currentRating = rating;
+            const stars = document.querySelectorAll('.star-rating span');
+            stars.forEach((star, index) => {
+                star.style.color = index < rating ? '#ffcc00' : '#ccc';
+            });
+        }
+
+        function submitFeedback() {
+            const comment = document.getElementById('comment').value;
+            if (currentRating > 0) {
+                // Préparer les données à envoyer
+                const feedbackData = {
+                    note: currentRating,
+                    commentaire: comment
+                };
+
+                // Envoyer les données au serveur
+                fetch("{{ path('enregistrer_avis', {'id': commande.id}) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest' // Pour indiquer que c'est une requête AJAX
+                    },
+                    body: JSON.stringify(feedbackData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Merci pour votre avis !");
+                            // Masquer la section feedbackSection
+                            document.getElementById('feedbackSection').style.display = 'none';
+                        } else {
+                            alert(data.message); // Afficher le message d'erreur retourné par le serveur
+                            if (data.message === 'Un avis a déjà été soumis pour cette commande.') {
+                                // Masquer la section feedbackSection si un avis existe déjà
+                                document.getElementById('feedbackSection').style.display = 'none';
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        alert("Une erreur s'est produite lors de l'envoi de votre avis.");
+                    });
+            } else {
+                alert("Veuillez donner une note avant de soumettre.");
+            }
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const button = document.getElementById('darkModeToggle');
+            if (document.body.classList.contains('dark-mode')) {
+                button.textContent = 'Mode Lumière ☀️';
+            } else {
+                button.textContent = 'Mode Cinéma 🎥';
+            }
+        }
+    </script>
+
+</body>
+
+</html>

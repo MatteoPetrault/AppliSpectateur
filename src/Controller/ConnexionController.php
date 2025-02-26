@@ -37,6 +37,7 @@ class ConnexionController extends AbstractController
                     return $this->redirectToRoute('home');
                 } else {
                     $this->addFlash('error', 'Email ou mot de passe incorrect.');
+                    return $this->redirectToRoute('connexion', ['form' => 'login']);
                 }
             } elseif ($action === 'signup') {
                 // Récupération des données du formulaire
@@ -85,7 +86,12 @@ class ConnexionController extends AbstractController
             }
         }
 
-        return $this->render('connexion/index.html.twig');
+         // Récupérer le paramètre 'form' (login par défaut)
+        $formType = $request->query->get('form', 'login');
+
+        return $this->render('connexion/index.html.twig', [
+            'form' => $formType,
+        ]);
     }
 
     #[Route('/home', name: 'home')]

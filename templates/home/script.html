@@ -31,7 +31,19 @@
             const tailleElement = document.getElementById('taille-' + produitId);
             const taille = tailleElement ? tailleElement.value : "unique";
             const itemId = `panier-${produitId}-${taille}`;
+            let price = 0;
+            const produitCadre = document.getElementById('nom-' + produitId).closest('.produit-cadre');
 
+            if (!tailleElement) { // Taille unique
+                const prixElement = produitCadre.querySelector('.produit-prix');
+                const prixText = prixElement.textContent;
+                const matches = prixText.match(/(\d+\.?\d*)€/);
+                price = matches ? parseFloat(matches[1]) : 0;
+            } else { // Multiple tailles
+                const selectedOption = tailleElement.options[tailleElement.selectedIndex];
+                const prixText = selectedOption.textContent.split(' - ')[1];
+                price = parseFloat(prixText.replace('€', ''));
+            }
             const existingItem = document.getElementById(itemId);
             let quantiteExistante = 0;
             if (existingItem) {
@@ -59,7 +71,7 @@
                 } else {
                     // Ajout d'un nouvel élément dans le panier
                     cartItemsContainer.innerHTML += `
-                    <div id="${itemId}" class="d-flex justify-content-between mb-2">
+                    <div id="${itemId}" class="d-flex justify-content-between mb-2" data-price="${price}">
                         <span>${document.getElementById('nom-' + produitId).textContent} (${taille})</span>
                         <div>
                             <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', -1)">-</button>
@@ -69,19 +81,21 @@
                         </div>
                     </div>
                 `;
+                    calculateTotal();
                 }
                 // Afficher le formulaire de livraison si des produits sont présents
                 document.getElementById('deliveryFormContainer').style.display = 'block';
-
             }
-            afficherNotification();
+            // Mettre à jour le compteur du panier flottant
+            updateFloatingCartCount();
+            //afficherNotification();
         }
-        function afficherNotification() {
+        /*function afficherNotification() {
             const notification = document.createElement('div');
             notification.classList.add('cart-notification');
             notification.innerHTML = `
             <div class="notification-content">
-                Produit ajouté ! <a href="#" onclick="openCartModal()">Voir le panier</a>
+                Produit ajouté ! 
             </div>
         `;
 
@@ -99,7 +113,7 @@
             setTimeout(() => {
                 notification.remove();
             }, 5000);
-        }
+        }*/
 
 
         // Fonction pour ouvrir le modal
@@ -118,7 +132,7 @@
                 const categoryMatch = !selectedCategory || (productCategory === selectedCategory);
                 const subcategoryMatch = !selectedSubcategory || (productSubcategory === selectedSubcategory);
 
-                product.style.display = (categoryMatch && subcategoryMatch) ? 'block' : 'none';
+                product.style.display = (categoryMatch && subcategoryMatch) ? '' : 'none'; // Utilisez le style par défaut ou 'none'
             });
         }
 
@@ -135,6 +149,7 @@
             }
             if (nouvelleQuantite <= 0) retirerProduit(produitId, taille);
             else span.textContent = nouvelleQuantite;
+            calculateTotal();
         }
 
         function retirerProduit(produitId, taille) {
@@ -147,6 +162,7 @@
                 // Masquer le formulaire de livraison si le panier est vide
                 document.getElementById('deliveryFormContainer').style.display = 'none';
             }
+            calculateTotal();
         }
 
         function showErrorPopup(message) {
@@ -179,7 +195,6 @@
             const sortValue = document.getElementById('sortSelect').value;
             const produitsListe = document.querySelector('.produits-liste');
             const produits = Array.from(produitsListe.querySelectorAll('.produit-cadre'));
-            console.log("Tri sélectionné:", sortValue);
 
             let sortFunction;
             switch (sortValue) {
@@ -206,12 +221,9 @@
             }
 
             produits.sort(sortFunction);
-            if (sortValue === 'category') {
-                produits.forEach(produit => produitsListe.appendChild(produit));
-            } else {
-                produitsListe.innerHTML = ''; // Vider la liste actuelle des produits
-                produits.forEach(produit => produitsListe.appendChild(produit));
-            }
+            produitsListe.innerHTML = ''; // Vider la liste
+            produits.forEach(produit => produitsListe.appendChild(produit)); // Réinsérer les produits triés
+            filterProducts();
         }
 
         function getPrice(produitElement) {
@@ -365,6 +377,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        calculateTotal();
                         // Actualiser le panier ou afficher un message
                         window.location.reload();
                     } else {
@@ -372,9 +385,24 @@
                     }
                 });
         }
-
-
-
+        function updateFloatingCartCount() {
+            const cartItems = document.querySelectorAll('#cartItemsContainer > div');
+            let total = 0;
+            cartItems.forEach(item => {
+                const qty = parseInt(item.querySelector('.panier-quantite').textContent);
+                total += qty;
+            });
+            document.getElementById('floatingCartCount').textContent = total;
+        }
+        function calculateTotal() {
+            let total = 0;
+            document.querySelectorAll('#cartItemsContainer > div').forEach(item => {
+                const price = parseFloat(item.dataset.price);
+                const quantity = parseInt(item.querySelector('.panier-quantite').textContent);
+                total += price * quantity;
+            });
+            document.getElementById('totalPrice').textContent = total.toFixed(2) + '€';
+        }
 
 
     </script>
