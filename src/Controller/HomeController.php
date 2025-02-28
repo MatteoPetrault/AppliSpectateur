@@ -82,80 +82,33 @@ class HomeController extends AbstractController
         try {
             $data = json_decode($request->getContent(), true);
 
-            // Validate input data
             if (!isset($data['produitId']) || !isset($data['avoirIds']) || !isset($data['quantity'])) {
                 return new JsonResponse(['success' => false, 'message' => 'Données manquantes'], 400);
             }
 
-            // Create the command and set required fields
-            $commande = new Commande();
-            // Vérifier que l'utilisateur est connecté
-
-
-            $commande->setNumeroCommande(uniqid('CMD_')); // Unique command number
-            $commande->setDate(new \DateTime()); // Current date
-            $commande->setHeure(new \DateTime()); // Current time
-
-            // Set status
-            $statut = $this->entityManager->getRepository(Statut::class)->findOneBy(['libelle' => 'Enregistrée']);
-            if (!$statut) {
-                return new JsonResponse(['success' => false, 'message' => 'Statut non trouvé'], 400);
-            }
-            $commande->setStatut($statut);
-
-            // Track total price
-            $total = 0.0;
-
-            // Generate menu number
-            $numeroMenu = (int)time();
-
-            // Retrieve menu product
             $menuProduit = $this->entityManager->getRepository(Produit::class)->find($data['produitId']);
             if (!$menuProduit || $menuProduit->getCategorie()->getId() !== 7) {
                 return new JsonResponse(['success' => false, 'message' => 'Produit non valide'], 400);
             }
 
-            // Add regular line items
-            foreach ($data['avoirIds'] as $avoirId) {
-                $avoir = $this->entityManager->getRepository(Avoir::class)->find($avoirId);
-                if (!$avoir) {
-                    return new JsonResponse(['success' => false, 'message' => "Avoir $avoirId non trouvé"], 400);
-                }
+            // Récupérer le panier depuis la session
+            $session = $request->getSession();
+            $panier = $session->get('panier', []);
 
-                $ligne = new LigneCommande();
-                $ligne->setProduit($avoir->getProduit());
-                $ligne->setTaille($avoir->getTaille());
-                $ligne->setQuantite($data['quantity']);
-                $ligne->setPrix($avoir->getPrix()); // Unit price
-                $ligne->setNumeroMenu($numeroMenu);
-                $ligne->setCommande($commande);
+            // Générer un identifiant unique pour le menu
+            $menuId = uniqid('menu_');
 
-                // Add to total (unit price * quantity)
-                $total += $avoir->getPrix() * $data['quantity'];
+            // Ajouter les éléments du menu dans le panier
+            $panier[$menuId] = [
+                'type' => 'menu',
+                'produit_id' => $menuProduit->getId(),
+                'avoir_ids' => $data['avoirIds'],
+                'quantite' => $data['quantity'],
+                'reduction' => $menuProduit->getValeur(),
+                'numero_menu' => time()
+            ];
 
-                $this->entityManager->persist($ligne);
-            }
-
-            // Add discount line item
-            $ligneReduction = new LigneCommande();
-            $ligneReduction->setProduit($menuProduit);
-            $ligneReduction->setQuantite($data['quantity']);
-            $discountPerUnit = -$menuProduit->getValeur(); // Unit discount (e.g., -5€ per menu)
-            $ligneReduction->setPrix($discountPerUnit); // Unit price (not total)
-            $ligneReduction->setNumeroMenu($numeroMenu);
-            $ligneReduction->setCommande($commande);
-
-            // Add discount to total (unit discount * quantity)
-            $total += $discountPerUnit * $data['quantity'];
-
-            $this->entityManager->persist($ligneReduction);
-
-            // Set total price on the command
-            $commande->setPrixTotal($total);
-
-            // Persist and save everything
-            $this->entityManager->persist($commande);
-            $this->entityManager->flush();
+            $session->set('panier', $panier);
 
             return new JsonResponse(['success' => true]);
 
@@ -166,5 +119,6 @@ class HomeController extends AbstractController
             ], 500);
         }
     }
+    
 
 }

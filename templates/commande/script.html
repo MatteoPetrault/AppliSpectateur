@@ -9,48 +9,82 @@
 
 <body>
     <script>
+        // Mise à jour du statusMap
         const statusMap = {
-            'Enregistrée': { progress: 25, step: 1, emoji: '📋' },
-            'En cours de préparation': { progress: 50, step: 2, emoji: '🍿' },
-            'En attente de récupération': { progress: 75, step: 3, emoji: '🎬' },
-            'Terminé': { progress: 100, step: 4, emoji: '🎉' },
-            'Annulé': { progress: 0, step: 0, emoji: '❌' }
+            'En cours de préparation': { 
+                progress: 15, 
+                step: 1, 
+                emoji: '🍿',
+                message: 'Préparation de vos produits en cours'
+            },
+            'En attente de récupération': { 
+                progress: 50, 
+                step: 2, 
+                emoji: '🎬',
+                message: 'Votre commande est prête !'
+            },
+            'Terminé': { 
+                progress: 100, 
+                step: 3, 
+                emoji: '🎉',
+                message: 'Bon film ! 🎥'
+            },
+            'Annulé': { 
+                progress: 0, 
+                step: 0, 
+                emoji: '❌',
+                message: 'Commande annulée'
+            }
         };
 
+        // Fonction updateInterface simplifiée
         function updateInterface(data) {
-            const statusInfo = statusMap[data.statut];
+            // Normalisation du statut
+            const normalizedStatus = data.statut === 'Enregistrée' 
+                ? 'En cours de préparation' 
+                : data.statut;
+            
+            const statusInfo = statusMap[normalizedStatus] || { 
+                progress: 0, 
+                step: 0, 
+                emoji: '❓',
+                message: 'Statut inconnu'
+            };
 
+            // Mise à jour de la progression
             document.getElementById('progress').style.width = statusInfo.progress + '%';
 
+            // Mise à jour des étapes
             document.querySelectorAll('.status-step').forEach((step, index) => {
-                step.classList.toggle('active-step', index < statusInfo.step);
-                step.querySelector('.step-icon').classList.toggle('pulse', index + 1 === statusInfo.step);
+                const isActive = index < statusInfo.step;
+                const isCurrent = index + 1 === statusInfo.step;
+                
+                step.classList.toggle('active-step', isActive);
+                step.querySelector('.step-icon').classList.toggle('pulse', isCurrent);
             });
 
-            const statusMessage = document.getElementById('statusMessage');
-            statusMessage.innerHTML = `${statusInfo.emoji} ${getMessage(data.statut)}`;
+            // Affichage du message
+            document.getElementById('statusMessage').innerHTML = 
+                `${statusInfo.emoji} ${statusInfo.message}`;
 
-            // Ajout du message de paiement uniquement quand la commande est prête
+            // Gestion de la notification de paiement
             const paymentNotice = document.getElementById('paymentNotice');
-            if (data.statut === 'En attente de récupération') {
-                paymentNotice.innerHTML = `
-                Nom : ${data.nom}<br>
-                Prénom : ${data.prenom}<br>
-                Numéro de commande : ${data.numero_commande}
+            paymentNotice.innerHTML = normalizedStatus === 'En attente de récupération' ? `
+                <div class="client-info">
+                    Nom : ${data.nom}<br>
+                    Prénom : ${data.prenom}<br>
+                    Numéro de commande : ${data.numero_commande}
+                </div>
                 <div class="payment-notice">
                     <strong>🚨 Votre commande est prête !</strong><br>
-                    Merci de venir la récupérer et régler au comptoir en fournissant votre nom,<br>
-                     prénom et numéro de commande.
+                    Merci de venir la récupérer et régler au comptoir.
                 </div>
-            `;
-            } else {
-                paymentNotice.innerHTML = '';
-            }
+            ` : '';
         }
 
         function getMessage(statut) {
             switch (statut) {
-                case 'Enregistrée': return 'Votre commande est enregistrée';
+                case 'Enregistrée': return 'Préparation de vos produits en cours';
                 case 'En cours de préparation': return 'Préparation de vos produits en cours';
                 case 'En attente de récupération': return 'Votre commande est prête !';
                 case 'Terminé': return 'Bon film ! 🎥';

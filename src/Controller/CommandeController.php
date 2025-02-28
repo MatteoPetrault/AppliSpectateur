@@ -28,8 +28,8 @@ class CommandeController extends AbstractController
             return $this->redirectToRoute('home');
         }
 
-        // Récupérer le statut de la commande (adapte cette partie en fonction de ta logique)
-        $statut = 'Enregistrée'; // Exemple de statut
+        // Statut fusionné
+        $statut = 'En cours de préparation'; // Les deux statuts utilisent maintenant cette clé
 
         return $this->render('commande/index.html.twig', [
             'statut' => $statut,
