@@ -403,6 +403,36 @@
             });
             document.getElementById('totalPrice').textContent = total.toFixed(2) + '€';
         }
+        // Gestion des filtres par catégorie/sous-catégorie
+        document.querySelectorAll('.subcategory-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const categoryId = this.dataset.category;
+                const subcategoryId = this.value;
+                
+                const section = this.closest('.category-section');
+                section.querySelectorAll('.produit-cadre').forEach(produit => {
+                    const produitSub = produit.dataset.subcategory;
+                    if (!subcategoryId || produitSub === subcategoryId) {
+                        produit.style.display = 'block';
+                    } else {
+                        produit.style.display = 'none';
+                    }
+                });
+            });
+        });
+        // Dans script.html
+        document.querySelectorAll('.collapse').forEach(collapse => {
+        collapse.addEventListener('show.bs.collapse', e => {
+            const header = e.target.previousElementSibling;
+            header.classList.add('active');
+        });
+        
+        collapse.addEventListener('hide.bs.collapse', e => {
+            const header = e.target.previousElementSibling;
+            header.classList.remove('active');
+        });
+        });
+        
 
 
     </script>

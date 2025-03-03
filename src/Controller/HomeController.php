@@ -32,9 +32,11 @@ class HomeController extends AbstractController
         CategorieRepository $categorieRepository,
         PossedeRepository $possedeRepository
     ): Response {
-        $categories = $categorieRepository->findAll();
+        // Récupérer les catégories triées par ordre
+        $categories = $categorieRepository->findAllOrderedByOrder();
         $allPossede = $possedeRepository->findAll();
         $subcategoriesByCategory = [];
+        $groupedProducts = [];
 
         foreach ($allPossede as $possede) {
             $category = $possede->getCategorie();
@@ -44,11 +46,18 @@ class HomeController extends AbstractController
             }
         }
 
-        // Récupérer uniquement les produits en ligne
         $produits = $produitRepository->findBy(['en_ligne' => 1]);
 
+        // Grouper les produits par catégorie
+        foreach ($produits as $produit) {
+            $categoryId = $produit->getCategorie()->getId();
+            if ($categoryId !== 7) { // Exclure les menus
+                $groupedProducts[$categoryId][] = $produit;
+            }
+        }
+
         return $this->render('home/index.html.twig', [
-            'produits' => $produits,
+            'groupedProducts' => $groupedProducts,
             'categories' => $categories,
             'subcategoriesByCategory' => $subcategoriesByCategory
         ]);

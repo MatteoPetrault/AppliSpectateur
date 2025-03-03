@@ -15,6 +15,13 @@ class CategorieRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Categorie::class);
     }
+    public function findAllOrderedByOrder()
+    {
+        return $this->createQueryBuilder('c')
+            ->orderBy('c.ordre', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 
     //    /**
     //     * @return Categorie[] Returns an array of Categorie objects
