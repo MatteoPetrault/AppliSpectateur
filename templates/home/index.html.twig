@@ -161,6 +161,56 @@
               </div>
             </div>
           {% endif %}
+          {% if category.id == 7 and groupedProducts[category.id] is defined %}
+            <div class="category-card card mb-3">
+              <div class="card-header d-flex justify-content-between align-items-center pe-3" 
+                  id="heading{{ category.id }}"
+                  role="button" 
+                  data-bs-toggle="collapse" 
+                  data-bs-target="#collapse{{ category.id }}" 
+                  aria-expanded="false" 
+                  aria-controls="collapse{{ category.id }}">
+                <h2 class="mb-0">{{ category.libelle }}</h2>
+              </div>
+              <div id="collapse{{ category.id }}" class="collapse" aria-labelledby="heading{{ category.id }}" data-bs-parent="#categoriesAccordion">
+                <div class="card-body">
+                  <div class="produits-liste">
+                    {% for produit in groupedProducts[category.id] %}
+                      <div class="produit-cadre menu-cadre">
+                        <h3 class="produit-nom">{{ produit.nom }}</h3>
+                        <div class="menu-options">
+                          {% for famille in produit.familles %}
+                            <div class="famille mb-3">
+                              <label class="form-label">{{ famille.libelle }}</label>
+                              <select class="form-select menu-select" data-famille="{{ famille.id }}">
+                                {% for composer in famille.composers %}
+                                  {% set avoir = composer.avoir %}
+                                  <option value="{{ avoir.id }}">
+                                    {{ avoir.produit.nom }} - {{ avoir.taille.unite }} ({{ avoir.prix }}€)
+                                  </option>
+                                {% endfor %}
+                              </select>
+                            </div>
+                          {% endfor %}
+                        </div>
+                        <div class="quantity-wrapper">
+                          <label>Quantité :</label>
+                          <div class="input-group" style="width: 150px;">
+                            <button type="button" class="btn btn-secondary" onclick="updateMenuQuantity({{ produit.id }}, -1)">-</button>
+                            <input type="number" id="quantite-menu-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
+                            <button type="button" class="btn btn-secondary" onclick="updateMenuQuantity({{ produit.id }}, 1)">+</button>
+                          </div>
+                        </div>
+                        <button class="btn btn-danger mt-2" onclick="ajouterMenuAuPanier({{ produit.id }})">
+                          Ajouter le menu
+                        </button>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
         {% endfor %}  
       </div>
     </main>

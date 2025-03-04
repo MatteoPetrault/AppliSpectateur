@@ -51,7 +51,7 @@ class HomeController extends AbstractController
         // Grouper les produits par catégorie
         foreach ($produits as $produit) {
             $categoryId = $produit->getCategorie()->getId();
-            if ($categoryId !== 7) { // Exclure les menus
+            if ($categoryId !== 8) { // Exclure les menus
                 $groupedProducts[$categoryId][] = $produit;
             }
         }
@@ -94,38 +94,49 @@ class HomeController extends AbstractController
             if (!isset($data['produitId']) || !isset($data['avoirIds']) || !isset($data['quantity'])) {
                 return new JsonResponse(['success' => false, 'message' => 'Données manquantes'], 400);
             }
-
+            // Récupération du produit principal
             $menuProduit = $this->entityManager->getRepository(Produit::class)->find($data['produitId']);
-            if (!$menuProduit || $menuProduit->getCategorie()->getId() !== 7) {
-                return new JsonResponse(['success' => false, 'message' => 'Produit non valide'], 400);
+            $reduction = $menuProduit->getValeur(); // valeur unitaire
+                
+            // Calcul du prix total du menu
+            $composants = [];
+            $prixTotal = 0;
+            foreach ($data['avoirIds'] as $avoirId) {
+                $avoir = $this->entityManager->getRepository(Avoir::class)->find($avoirId);
+                $prixTotal += $avoir->getPrix();
+                $composants[] = $avoir->getProduit()->getNom() . ' (' . $avoir->getTaille()->getUnite() . ')';
             }
-
-            // Récupérer le panier depuis la session
+            
+            // Application de la réduction
+            $prixTotal -= $reduction;
+            $prixTotal = round($prixTotal, 2);
+            
+    
+            // Stockage dans la session
             $session = $request->getSession();
             $panier = $session->get('panier', []);
-
-            // Générer un identifiant unique pour le menu
-            $menuId = uniqid('menu_');
-
-            // Ajouter les éléments du menu dans le panier
-            $panier[$menuId] = [
+            
+            $menuData = [
                 'type' => 'menu',
                 'produit_id' => $menuProduit->getId(),
                 'avoir_ids' => $data['avoirIds'],
                 'quantite' => $data['quantity'],
-                'reduction' => $menuProduit->getValeur(),
-                'numero_menu' => time()
+                'prix_total' => $prixTotal,
+                'composants' => implode(', ', $composants),
+                'reduction' => $reduction
             ];
-
+            
+            $panier[] = $menuData; // Ajout comme nouvel élément
             $session->set('panier', $panier);
-
-            return new JsonResponse(['success' => true]);
-
-        } catch (\Exception $e) {
+    
             return new JsonResponse([
-                'success' => false, 
-                'message' => 'Erreur interne : ' . $e->getMessage()
-            ], 500);
+                'success' => true,
+                'prixTotal' => $prixTotal,
+                'composants' => implode(' + ', $composants)
+            ]);
+    
+        } catch (\Exception $e) {
+            return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
     

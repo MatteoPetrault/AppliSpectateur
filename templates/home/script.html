@@ -136,7 +136,6 @@
             });
         }
 
-
         function modifierQuantite(produitId, taille, change) {
             const itemId = `panier-${produitId}-${taille}`;
             const span = document.querySelector(`#${itemId} .panier-quantite`);
@@ -151,19 +150,30 @@
             else span.textContent = nouvelleQuantite;
             calculateTotal();
         }
-
         function retirerProduit(produitId, taille) {
             if (!confirm("Confirmer la suppression ?")) return;
             const itemId = `panier-${produitId}-${taille}`;
-            document.getElementById(itemId).remove();
+            const element = document.getElementById(itemId);
+            if (element) {
+                element.remove();
+            } else {
+                // Gestion spécifique pour les menus (catégorie 7)
+                // Par exemple, rechercher l'élément avec une classe ou un autre attribut
+                const menuElement = document.querySelector(`.menu-cadre[data-produit-id="${produitId}"]`);
+                if (menuElement) {
+                    menuElement.remove();
+                    // Vous pouvez aussi retirer ici les produits associés au menu, si nécessaire
+                }
+            }
+            // Mise à jour de l'affichage du panier
             const cartItemsContainer = document.getElementById('cartItemsContainer');
             if (!cartItemsContainer.children.length) {
                 cartItemsContainer.innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
-                // Masquer le formulaire de livraison si le panier est vide
                 document.getElementById('deliveryFormContainer').style.display = 'none';
             }
             calculateTotal();
         }
+
 
         function showErrorPopup(message) {
             document.getElementById('errorMessage').textContent = message;
@@ -334,57 +344,6 @@
             input.value = newValue;
         }
 
-        function openConfirmModal2(produitId) {
-            const menuCadre = document.querySelector(`.menu-cadre[data-produit-id="${produitId}"]`);
-
-            if (!menuCadre) {
-                console.error(`Erreur: Impossible de trouver le menu avec produitId ${produitId}`);
-                return;
-            }
-
-            const quantityInput = menuCadre.querySelector(`#quantite-menu-${produitId}`);
-            console.log("Element trouvé ?", quantityInput);
-            if (!quantityInput) {
-                console.error(`Erreur: Impossible de trouver l'input quantité pour produitId ${produitId}`);
-                return;
-            }
-            const quantity = parseInt(quantityInput.value);
-            const valeur = parseFloat(menuCadre.dataset.valeur);
-            console.log("Quantité sélectionnée :", quantity);
-            // Récupérer les sélections de chaque famille
-            const selects = menuCadre.querySelectorAll('.famille select');
-            const avoirIds = Array.from(selects).map(select => select.value);
-
-            if (avoirIds.some(id => !id)) {
-                alert('Veuillez sélectionner une option pour chaque catégorie.');
-                return;
-            }
-
-            // Envoyer les données au serveur
-            fetch('/panier/ajouter-menu', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    produitId: produitId,
-                    avoirIds: avoirIds,
-                    quantity: quantity,
-                    valeur: valeur
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        calculateTotal();
-                        // Actualiser le panier ou afficher un message
-                        window.location.reload();
-                    } else {
-                        alert('Erreur lors de l\'ajout au panier.');
-                    }
-                });
-        }
         function updateFloatingCartCount() {
             const cartItems = document.querySelectorAll('#cartItemsContainer > div');
             let total = 0;
@@ -397,9 +356,13 @@
         function calculateTotal() {
             let total = 0;
             document.querySelectorAll('#cartItemsContainer > div').forEach(item => {
-                const price = parseFloat(item.dataset.price);
-                const quantity = parseInt(item.querySelector('.panier-quantite').textContent);
-                total += price * quantity;
+                if (item.dataset.type === 'menu') {
+                    total += parseFloat(item.dataset.price) * parseInt(item.querySelector('.panier-quantite').textContent);
+                } else {
+                    const price = parseFloat(item.dataset.price);
+                    const quantity = parseInt(item.querySelector('.panier-quantite').textContent);
+                    total += price * quantity;
+                }
             });
             document.getElementById('totalPrice').textContent = total.toFixed(2) + '€';
         }
@@ -432,7 +395,81 @@
             header.classList.remove('active');
         });
         });
-        
+        function updateMenuQuantity(produitId, change) {
+            const input = document.getElementById(`quantite-menu-${produitId}`);
+            let newValue = parseInt(input.value) + change;
+            if (newValue < 1) newValue = 1;
+            if (newValue > 10) newValue = 10;
+            input.value = newValue;
+        }
+
+        function ajouterMenuAuPanier(produitId) {
+            const menuElement = document.querySelector(`#quantite-menu-${produitId}`).closest('.menu-cadre');
+            const selects = menuElement.querySelectorAll('.menu-select');
+            const avoirIds = Array.from(selects).map(select => select.value);
+            const quantite = parseInt(document.getElementById(`quantite-menu-${produitId}`).value);
+            const menuNom = menuElement.querySelector('.produit-nom').textContent;
+
+            fetch('/panier/ajouter-menu', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    produitId: produitId,
+                    avoirIds: avoirIds,
+                    quantity: quantite
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Ajout visuel dans le panier
+                    const cartItemsContainer = document.getElementById('cartItemsContainer');
+                    const emptyMsg = document.getElementById('emptyCartMsg');
+                    if (emptyMsg) emptyMsg.remove();
+
+                    const menuId = `menu-${produitId}-${Date.now()}`;
+                    const prixTotal = data.prixTotal.toFixed(2);
+                    
+                    cartItemsContainer.innerHTML += `
+                        <div id="${menuId}" class="d-flex justify-content-between mb-2" data-type="menu" data-price="${prixTotal}">
+                            <div>
+                                <span>${menuNom} (Menu)</span>
+                                <div class="text-muted small">${data.composants}</div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-secondary" onclick="modifierQuantiteMenu('${menuId}', -1)">-</button>
+                                <span class="panier-quantite mx-2">${quantite}</span>
+                                <button class="btn btn-sm btn-secondary" onclick="modifierQuantiteMenu('${menuId}', 1)">+</button>
+                                <button class="btn btn-sm btn-danger" onclick="retirerProduit('${menuId}')">❌</button>
+                            </div>
+                        </div>
+                    `;
+
+                    updateFloatingCartCount();
+                    calculateTotal();
+                } else {
+                    alert('Erreur : ' + data.message);
+                }
+            });
+        }
+
+        function modifierQuantiteMenu(menuId, change) {
+            const item = document.getElementById(menuId);
+            const span = item.querySelector('.panier-quantite');
+            let nouvelleQuantite = parseInt(span.textContent) + change;
+            
+            if (nouvelleQuantite < 1) return;
+            if (nouvelleQuantite > 10) {
+                alert("Quantité maximale atteinte !");
+                return;
+            }
+            
+            span.textContent = nouvelleQuantite;
+            calculateTotal();
+        }
+
 
 
     </script>

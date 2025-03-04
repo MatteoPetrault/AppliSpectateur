@@ -441,12 +441,6 @@ button:focus {
     gap: 20px;
     padding: 15px;
 }
-.menu-cadre {
-    border: 1px solid #ddd;
-    padding: 15px;
-    border-radius: 8px;
-    background: var(--blanc);
-}
 .reduction {
     color: #28a745;
     font-weight: bold;
@@ -457,4 +451,21 @@ button:focus {
 }
 .famille {
     margin-bottom: 10px;
+}
+.menu-cadre {
+    background: #fff;
+    border: 2px solid var(--rouge-cinema);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.menu-options .form-select {
+    margin-bottom: 15px;
+    border-color: var(--rouge-cinema);
+}
+
+.menu-options label {
+    font-weight: bold;
+    color: var(--rouge-cinema);
 }
