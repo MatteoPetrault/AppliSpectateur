@@ -1,397 +1,478 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Document</title>
-      <!-- Bootstrap CSS -->
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  </head>
-  <body>
-      <!-- Bootstrap JS Bundle (inclut Popper) -->
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-      
-      <script>
-          let currentProduitId = null;
-          
-          // Ouvre le modal de confirmation pour ajouter un produit classique au panier
-          function openConfirmModal(produitId) {
-              currentProduitId = produitId;
-              let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddModal'));
-              confirmModal.show();
-          }
-          
-          document.getElementById('confirmAddButton').addEventListener('click', function () {
-              ajouterAuPanierConfirmed(currentProduitId);
-              bootstrap.Modal.getInstance(document.getElementById('confirmAddModal')).hide();
-          });
-          
-          // Ajoute un produit classique au panier
-          function ajouterAuPanierConfirmed(produitId) {
-              const quantiteInput = document.getElementById('quantite-' + produitId);
-              const quantite = parseInt(quantiteInput.value);
-              const tailleElement = document.getElementById('taille-' + produitId);
-              const taille = tailleElement ? tailleElement.value : "unique";
-              const itemId = `panier-${produitId}-${taille}`;
-              let price = 0;
-              
-              const produitCadre = document.getElementById('nom-' + produitId).closest('.produit-cadre');
-              if (!tailleElement) { // Taille unique
-                  const prixElement = produitCadre.querySelector('.produit-prix');
-                  const prixText = prixElement.textContent;
-                  const matches = prixText.match(/(\d+\.?\d*)€/);
-                  price = matches ? parseFloat(matches[1]) : 0;
-              } else { // Plusieurs tailles
-                  const selectedOption = tailleElement.options[tailleElement.selectedIndex];
-                  const prixText = selectedOption.textContent.split(' - ')[1];
-                  price = parseFloat(prixText.replace('€', ''));
-              }
-              
-              const existingItem = document.getElementById(itemId);
-              let quantiteExistante = 0;
-              if (existingItem) {
-                  quantiteExistante = parseInt(existingItem.querySelector('.panier-quantite').textContent);
-              }
-              
-              if (quantiteExistante + quantite > 10) {
-                  showErrorPopup("Vous ne pouvez pas commander plus de 10 fois le même article !");
-                  quantiteInput.value = 10 - quantiteExistante;
-                  return;
-              }
-              
-              if (quantite > 0) {
-                  const cartItemsContainer = document.getElementById('cartItemsContainer');
-                  // Supprime le message "Votre panier est vide" s'il existe
-                  const emptyMsg = document.getElementById('emptyCartMsg');
-                  if (emptyMsg) {
-                      emptyMsg.remove();
-                  }
-                  
-                  const cartItem = document.getElementById(itemId);
-                  if (cartItem) {
-                      // Mise à jour de la quantité existante
-                      const span = cartItem.querySelector('.panier-quantite');
-                      span.textContent = parseInt(span.textContent) + quantite;
-                  } else {
-                      // Ajoute un nouvel élément dans le panier
-                      cartItemsContainer.innerHTML += `
-                      <div id="${itemId}" class="d-flex justify-content-between mb-2" data-price="${price}">
-                          <span>${document.getElementById('nom-' + produitId).textContent} (${taille})</span>
-                          <div>
-                              <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', -1)">-</button>
-                              <span class="panier-quantite mx-2">${quantite}</span>
-                              <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', 1)">+</button>
-                              <button class="btn btn-sm btn-danger" onclick="retirerProduit('${produitId}', '${taille}')">❌</button>
-                          </div>
-                      </div>
-                      `;
-                      calculateTotal();
-                  }
-                  // Affiche le formulaire de livraison si le panier n'est pas vide
-                  document.getElementById('deliveryFormContainer').style.display = 'block';
-              }
-              updateFloatingCartCount();
-          }
-          
-          // Retire un produit classique du panier
-          function retirerProduit(produitId, taille) {
-              if (!confirm("Confirmer la suppression ?")) return;
-              const itemId = `panier-${produitId}-${taille}`;
-              const element = document.getElementById(itemId);
-              if (element) {
-                  element.remove();
-              }
-              updateCartAfterRemoval();
-          }
-          
-          // Retire un menu du panier (pour les éléments ajoutés via ajouterMenuAuPanier)
-          function retirerMenu(menuId) {
-              if (!confirm("Confirmer la suppression du menu ?")) return;
-              const element = document.getElementById(menuId);
-              if (element) {
-                  element.remove();
-              }
-              updateCartAfterRemoval();
-          }
-          
-          // Met à jour l'affichage du panier (message vide, total, compteur)
-          function updateCartAfterRemoval() {
-              const cartItemsContainer = document.getElementById('cartItemsContainer');
-              if (!cartItemsContainer.children.length) {
-                  cartItemsContainer.innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
-                  document.getElementById('deliveryFormContainer').style.display = 'none';
-              }
-              calculateTotal();
-              updateFloatingCartCount();
-          }
-          
-          // Affiche un popup d'erreur
-          function showErrorPopup(message) {
-              document.getElementById('errorMessage').textContent = message;
-              let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-              errorModal.show();
-          }
-          
-          // Ouvre le modal du panier
-          function openCartModal() {
-              const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
-              cartModal.show();
-          }
-          
-          // Modifie la quantité d'un produit classique dans le panier
-          function modifierQuantite(produitId, taille, change) {
-              const itemId = `panier-${produitId}-${taille}`;
-              const span = document.querySelector(`#${itemId} .panier-quantite`);
-              let nouvelleQuantite = parseInt(span.textContent) + change;
-          
-              if (change === 1 && nouvelleQuantite > 10) {
-                  alert("Quantité maximale (10) atteinte pour cet article !");
-                  return;
-              }
-              if (nouvelleQuantite <= 0) {
-                  retirerProduit(produitId, taille);
-                  return;
-              }
-              span.textContent = nouvelleQuantite;
-              calculateTotal();
-              updateFloatingCartCount();
-          }
-          
-          // Modifie la quantité d'un menu dans le panier
-          function modifierQuantiteMenu(menuId, change) {
-              const item = document.getElementById(menuId);
-              const span = item.querySelector('.panier-quantite');
-              let nouvelleQuantite = parseInt(span.textContent) + change;
-              
-              if (nouvelleQuantite <= 0) {
-                  if (confirm("Confirmer la suppression du menu ?")) {
-                      retirerMenu(menuId);
-                  }
-                  return;
-              }
-              if (nouvelleQuantite > 10) {
-                  alert("Quantité maximale atteinte !");
-                  return;
-              }
-              span.textContent = nouvelleQuantite;
-              calculateTotal();
-              updateFloatingCartCount();
-          }
-          
-          // Ajoute un menu au panier
-          function ajouterMenuAuPanier(produitId) {
-              const menuElement = document.querySelector(`#quantite-menu-${produitId}`).closest('.menu-cadre');
-              const selects = menuElement.querySelectorAll('.menu-select');
-              const avoirIds = Array.from(selects).map(select => select.value);
-              const quantite = parseInt(document.getElementById(`quantite-menu-${produitId}`).value);
-              const menuNom = menuElement.querySelector('.produit-nom').textContent;
-          
-              fetch('/panier/ajouter-menu', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                      produitId: produitId,
-                      avoirIds: avoirIds,
-                      quantity: quantite
-                  })
-              })
-              .then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      const cartItemsContainer = document.getElementById('cartItemsContainer');
-                      const emptyMsg = document.getElementById('emptyCartMsg');
-                      if (emptyMsg) emptyMsg.remove();
-          
-                      // On crée un id unique pour le menu ajouté
-                      const menuId = `menu-${produitId}-${Date.now()}`;
-                      const prixTotal = data.prixTotal.toFixed(2);
-                      
-                      cartItemsContainer.innerHTML += `
-                          <div id="${menuId}" class="d-flex justify-content-between mb-2" data-type="menu" data-price="${prixTotal}">
-                              <div>
-                                  <span>${menuNom} (Menu)</span>
-                                  <div class="text-muted small">${data.composants}</div>
-                              </div>
-                              <div>
-                                  <button class="btn btn-sm btn-secondary" onclick="modifierQuantiteMenu('${menuId}', -1)">-</button>
-                                  <span class="panier-quantite mx-2">${quantite}</span>
-                                  <button class="btn btn-sm btn-secondary" onclick="modifierQuantiteMenu('${menuId}', 1)">+</button>
-                                  <button class="btn btn-sm btn-danger" onclick="retirerMenu('${menuId}')">❌</button>
-                              </div>
-                          </div>
-                      `;
-                      document.getElementById('deliveryFormContainer').style.display = 'block';
-                      updateFloatingCartCount();
-                      calculateTotal();
-                  } else {
-                      alert('Erreur : ' + data.message);
-                  }
-              });
-          }
-          
-          // Met à jour le compteur du panier flottant
-          function updateFloatingCartCount() {
-              const cartItems = document.querySelectorAll('#cartItemsContainer > div');
-              let total = 0;
-              cartItems.forEach(item => {
-                  const qty = parseInt(item.querySelector('.panier-quantite').textContent);
-                  total += qty;
-              });
-              document.getElementById('floatingCartCount').textContent = total;
-          }
-          
-          // Recalcule le total du panier
-          function calculateTotal() {
-              let total = 0;
-              document.querySelectorAll('#cartItemsContainer > div').forEach(item => {
-                  const price = parseFloat(item.dataset.price);
-                  const quantity = parseInt(item.querySelector('.panier-quantite').textContent);
-                  total += price * quantity;
-              });
-              document.getElementById('totalPrice').textContent = total.toFixed(2) + '€';
-          }
-          
-          // Fonctions pour modifier la quantité dans les pages de produits
-          function updateQuantity(produitId, change) {
-              const input = document.getElementById('quantite-' + produitId);
-              let value = parseInt(input.value) + change;
-          
-              if (value > 10) {
-                  alert("Vous ne pouvez pas sélectionner plus de 10 articles !");
-                  value = 10;
-              }
-              input.value = Math.max(1, Math.min(10, value));
-          }
-          
-          function updateMenuQuantity(produitId, change) {
-              const input = document.getElementById(`quantite-menu-${produitId}`);
-              let newValue = parseInt(input.value) + change;
-              if (newValue < 1) newValue = 1;
-              if (newValue > 10) newValue = 10;
-              input.value = newValue;
-          }
-          
-          // Gestion de la soumission de commande
-          function submitOrder(event) {
-              event.preventDefault();
-          
-              const cartItems = document.querySelectorAll('#cartItemsContainer > div');
-              if (cartItems.length === 0) {
-                  alert('Votre panier est vide !');
-                  return;
-              }
-          
-              // Préparation des données
-              const formData = {
-                  user: {},
-                  cart: []
-              };
-          
-              const userIdElement = document.getElementById('userId');
-              if (userIdElement) {
-                  formData.user.id = userIdElement.value;
-              } else {
-                  formData.user.prenom = document.getElementById('prenom').value;
-                  formData.user.nom = document.getElementById('nom').value;
-              }
-          
-              cartItems.forEach(item => {
-                  // Pour les produits classiques, l'id est de la forme "panier-{produitId}-{taille}"
-                  // Pour les menus, on peut enregistrer l'id complet et éventuellement un flag "menu"
-                  if(item.dataset.type === 'menu') {
-                      formData.cart.push({
-                          menuId: item.id,
-                          quantity: parseInt(item.querySelector('.panier-quantite').textContent)
-                      });
-                  } else {
-                      const [_, produitId, taille] = item.id.split('-');
-                      formData.cart.push({
-                          produitId: parseInt(produitId),
-                          taille: taille,
-                          quantity: parseInt(item.querySelector('.panier-quantite').textContent)
-                      });
-                  }
-              });
-          
-              fetch('/checkout', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'X-Requested-With': 'XMLHttpRequest'
-                  },
-                  body: JSON.stringify(formData)
-              })
-              .then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      document.getElementById('cartItemsContainer').innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
-                      document.getElementById('deliveryFormContainer').style.display = 'none';
-                      bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
-                      window.location.href = '/commande';
-                  } else {
-                      alert('Erreur : ' + data.error);
-                  }
-              })
-              .catch(error => {
-                  console.error('Error:', error);
-                  alert('Une erreur est survenue lors de la validation du panier.');
-              });
-          }
-          
-          // Exemple de tri (si nécessaire)
-          function triCategorie() {
-              const sortValue = document.getElementById('sortSelect').value;
-              const produitsListe = document.querySelector('.produits-liste');
-              const produits = Array.from(produitsListe.querySelectorAll('.produit-cadre'));
-          
-              let sortFunction;
-              switch (sortValue) {
-                  case 'category':
-                      sortFunction = (a, b) => a.dataset.category.localeCompare(b.dataset.category);
-                      break;
-                  case 'price_asc':
-                      sortFunction = (a, b) => getPrice(a) - getPrice(b);
-                      break;
-                  case 'price_desc':
-                      sortFunction = (a, b) => getPrice(b) - getPrice(a);
-                      break;
-                  case 'name_asc':
-                      sortFunction = (a, b) => getName(a).localeCompare(getName(b));
-                      break;
-                  case 'name_desc':
-                      sortFunction = (a, b) => getName(b).localeCompare(getName(a));
-                      break;
-              }
-          
-              produits.sort(sortFunction);
-              produitsListe.innerHTML = '';
-              produits.forEach(produit => produitsListe.appendChild(produit));
-          }
-          
-          function getPrice(produitElement) {
-              const prixElement = produitElement.querySelector('.produit-prix');
-              if (prixElement) {
-                  const matches = prixElement.textContent.match(/(\d+\.?\d*)\s*€/);
-                  return matches ? parseFloat(matches[1]) : 0;
-              }
-              const select = produitElement.querySelector('.taille-select');
-              if (select && select.options.length > 0) {
-                  const matches = select.options[0].textContent.split(' - ')[1].match(/(\d+\.?\d*)\s*€/);
-                  return matches ? parseFloat(matches[1]) : 0;
-              }
-              return 0;
-          }
-          
-          function getName(produitElement) {
-              const nameElement = produitElement.querySelector('.produit-nom');
-              return nameElement ? nameElement.textContent.trim().toLowerCase() : '';
-          }
-          
-          document.addEventListener("DOMContentLoaded", function () {
-              triCategorie();
-          });
-      </script>
-  </body>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Bootstrap JS Bundle (inclut Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let currentProduitId = null;
+        let currentButton = null;
+        let currentMenuId = null;
+        let currentMenuButton = null;
+
+        // Ouvre le modal de confirmation pour ajouter un produit classique au panier
+        function openConfirmModal(produitId, button) {
+            currentProduitId = produitId;
+            currentButton = button; // Stockage correct de la référence
+            let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddModal'));
+            confirmModal.show();
+        }
+        // Confirmation de l'ajout
+        document.getElementById('confirmAddButton').addEventListener('click', function () {
+            ajouterAuPanierConfirmed(currentProduitId, currentButton); // Passez le bouton
+            bootstrap.Modal.getInstance(document.getElementById('confirmAddModal')).hide();
+        });
+        // Ouvre le modal de confirmation pour les menus
+        function openConfirmMenuModal(produitId, button) {
+            currentMenuId = produitId;
+            currentMenuButton = button;
+            let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddMenuModal'));
+            confirmModal.show();
+        }
+
+        // Confirmation d'ajout de menu
+        document.getElementById('confirmAddMenuButton').addEventListener('click', function() {
+            if (currentMenuId !== null) {
+                ajouterMenuAuPanier(currentMenuId);
+                animateAddToCart(currentMenuButton);
+            }
+            bootstrap.Modal.getInstance(document.getElementById('confirmAddMenuModal')).hide();
+        });
+
+        // Ajoute un produit classique au panier
+        function ajouterAuPanierConfirmed(produitId, button) {
+            const quantiteInput = document.getElementById('quantite-' + produitId);
+            const quantite = parseInt(quantiteInput.value);
+            const tailleElement = document.getElementById('taille-' + produitId);
+            const taille = tailleElement ? tailleElement.value : "unique";
+            const itemId = `panier-${produitId}-${taille}`;
+            let price = 0;
+
+            const produitCadre = document.getElementById('nom-' + produitId).closest('.produit-cadre');
+            if (!tailleElement) { // Taille unique
+                const prixElement = produitCadre.querySelector('.produit-prix');
+                const prixText = prixElement.textContent;
+                const matches = prixText.match(/(\d+\.?\d*)€/);
+                price = matches ? parseFloat(matches[1]) : 0;
+            } else { // Plusieurs tailles
+                const selectedOption = tailleElement.options[tailleElement.selectedIndex];
+                const prixText = selectedOption.textContent.split(' - ')[1];
+                price = parseFloat(prixText.replace('€', ''));
+            }
+
+            const existingItem = document.getElementById(itemId);
+            let quantiteExistante = 0;
+            if (existingItem) {
+                quantiteExistante = parseInt(existingItem.querySelector('.panier-quantite').textContent);
+            }
+
+            if (quantiteExistante + quantite > 10) {
+                showErrorPopup("Vous ne pouvez pas commander plus de 10 fois le même article !");
+                quantiteInput.value = 10 - quantiteExistante;
+                return;
+            }
+
+            if (quantite > 0) {
+                const cartItemsContainer = document.getElementById('cartItemsContainer');
+                // Supprime le message "Votre panier est vide" s'il existe
+                const emptyMsg = document.getElementById('emptyCartMsg');
+                if (emptyMsg) {
+                    emptyMsg.remove();
+                }
+
+                const cartItem = document.getElementById(itemId);
+                if (cartItem) {
+                    // Mise à jour de la quantité existante
+                    const span = cartItem.querySelector('.panier-quantite');
+                    span.textContent = parseInt(span.textContent) + quantite;
+                } else {
+                    // Ajoute un nouvel élément dans le panier
+                    cartItemsContainer.innerHTML += `
+                        <div id="${itemId}" class="d-flex justify-content-between align-items-center mb-2" data-price="${price}">
+                            <div class="transparent-frame">
+                                <span>${document.getElementById('nom-' + produitId).textContent} (${taille})</span>
+                            </div>
+                            <div class="quantity-container">
+                                <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', -1)">-</button>
+                                <span class="panier-quantite mx-2">${quantite}</span>
+                                <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', 1)">+</button>
+                            </div>
+                        </div>
+                    `;
+
+
+
+                    calculateTotal();
+                }
+                // Affiche le formulaire de livraison si le panier n'est pas vide
+                document.getElementById('deliveryFormContainer').style.display = 'block';
+            }
+            animateAddToCart(button);
+            updateFloatingCartCount();
+        }
+
+        function animateAddToCart(startElement) {
+            const cartIcon = document.getElementById('floatingCart');
+            if (!cartIcon) return;
+
+            // Appliquer une transition pour le zoom
+            cartIcon.style.transition = "transform 0.3s ease-out";
+            // Agrandir l'icône
+            cartIcon.style.transform = "scale(1.5)";
+
+            // Revenir à la taille normale après 300ms
+            setTimeout(() => {
+                cartIcon.style.transform = "scale(1)";
+            }, 300);
+        }
+
+
+
+
+        // Retire un produit classique du panier
+        function retirerProduit(produitId, taille) {
+            if (!confirm("Confirmer la suppression ?")) return;
+            const itemId = `panier-${produitId}-${taille}`;
+            const element = document.getElementById(itemId);
+            if (element) {
+                element.remove();
+            }
+            updateCartAfterRemoval();
+        }
+
+        // Retire un menu du panier (pour les éléments ajoutés via ajouterMenuAuPanier)
+        function retirerMenu(menuId) {
+            if (!confirm("Confirmer la suppression du menu ?")) return;
+            const element = document.getElementById(menuId);
+            if (element) {
+                element.remove();
+            }
+            updateCartAfterRemoval();
+        }
+
+        // Met à jour l'affichage du panier (message vide, total, compteur)
+        function updateCartAfterRemoval() {
+            const cartItemsContainer = document.getElementById('cartItemsContainer');
+            if (!cartItemsContainer.children.length) {
+                cartItemsContainer.innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
+                document.getElementById('deliveryFormContainer').style.display = 'none';
+            }
+            calculateTotal();
+            updateFloatingCartCount();
+        }
+
+        // Affiche un popup d'erreur
+        function showErrorPopup(message) {
+            document.getElementById('errorMessage').textContent = message;
+            let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            errorModal.show();
+        }
+
+        // Ouvre le modal du panier
+        function openCartModal() {
+            const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
+            cartModal.show();
+        }
+
+        // Modifie la quantité d'un produit classique dans le panier
+        function modifierQuantite(produitId, taille, change) {
+            const itemId = `panier-${produitId}-${taille}`;
+            const span = document.querySelector(`#${itemId} .panier-quantite`);
+            let nouvelleQuantite = parseInt(span.textContent) + change;
+
+            if (change === 1 && nouvelleQuantite > 10) {
+                alert("Quantité maximale (10) atteinte pour cet article !");
+                return;
+            }
+            if (nouvelleQuantite <= 0) {
+                retirerProduit(produitId, taille);
+                return;
+            }
+            span.textContent = nouvelleQuantite;
+            calculateTotal();
+            updateFloatingCartCount();
+        }
+
+        // Modifie la quantité d'un menu dans le panier
+        function modifierQuantiteMenu(menuId, change) {
+            const item = document.getElementById(menuId);
+            const span = item.querySelector('.panier-quantite');
+            let nouvelleQuantite = parseInt(span.textContent) + change;
+
+            if (nouvelleQuantite <= 0) {
+                if (confirm("Confirmer la suppression du menu ?")) {
+                    retirerMenu(menuId);
+                }
+                return;
+            }
+            if (nouvelleQuantite > 10) {
+                alert("Quantité maximale atteinte !");
+                return;
+            }
+            span.textContent = nouvelleQuantite;
+            calculateTotal();
+            updateFloatingCartCount();
+        }
+
+        // Ajoute un menu au panier
+        function ajouterMenuAuPanier(produitId) {
+            const menuElement = document.querySelector(`#quantite-menu-${produitId}`).closest('.menu-cadre');
+            const selects = menuElement.querySelectorAll('.menu-select');
+            const avoirIds = Array.from(selects).map(select => select.value);
+            const quantite = parseInt(document.getElementById(`quantite-menu-${produitId}`).value);
+            const menuNom = menuElement.querySelector('.produit-nom').textContent;
+
+            fetch('/panier/ajouter-menu', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    produitId: produitId,
+                    avoirIds: avoirIds,
+                    quantity: quantite
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const cartItemsContainer = document.getElementById('cartItemsContainer');
+                    const emptyMsg = document.getElementById('emptyCartMsg');
+                    if (emptyMsg) emptyMsg.remove();
+
+                    const menuId = `menu-${produitId}-${Date.now()}`;
+                    const prixTotal = data.prixTotal.toFixed(2);
+
+                    cartItemsContainer.innerHTML += `
+                    <div id="${menuId}" class="d-flex justify-content-between mb-2" data-type="menu" data-price="${prixTotal}">
+                        <div class="transparent-frame">
+                            <span>${menuNom} (Menu)</span>
+                            <div class="text-muted small">${data.composants}</div>
+                        </div>
+                        <div class="quantity-container">
+                            <button class="btn btn-sm btn-secondary" onclick="modifierQuantiteMenu('${menuId}', -1)">-</button>
+                            <span class="panier-quantite mx-2">${quantite}</span>
+                            <button class="btn btn-sm btn-secondary" onclick="modifierQuantiteMenu('${menuId}', 1)">+</button>
+                        </div>
+                    </div>
+                `;
+                    document.getElementById('deliveryFormContainer').style.display = 'block';
+                    updateFloatingCartCount();
+                    calculateTotal(); 
+                    animateAddToCart(currentMenuButton);
+                } else {
+                    alert('Erreur : ' + data.message);
+                }
+            });
+        }
+
+        // Met à jour le compteur du panier flottant
+        function updateFloatingCartCount() {
+            const cartItems = document.querySelectorAll('#cartItemsContainer > div');
+            let total = 0;
+            cartItems.forEach(item => {
+                const qty = parseInt(item.querySelector('.panier-quantite').textContent);
+                total += qty;
+            });
+            document.getElementById('floatingCartCount').textContent = total;
+        }
+
+        // Recalcule le total du panier
+        function calculateTotal() {
+            let total = 0;
+            document.querySelectorAll('#cartItemsContainer > div').forEach(item => {
+                const price = parseFloat(item.dataset.price);
+                const quantity = parseInt(item.querySelector('.panier-quantite').textContent);
+                total += price * quantity;
+            });
+            document.getElementById('totalPrice').textContent = total.toFixed(2) + '€';
+        }
+
+        // Fonctions pour modifier la quantité dans les pages de produits
+        function updateQuantity(produitId, change) {
+            const input = document.getElementById('quantite-' + produitId);
+            let value = parseInt(input.value) + change;
+
+            if (value > 10) {
+                alert("Vous ne pouvez pas sélectionner plus de 10 articles !");
+                value = 10;
+            }
+            input.value = Math.max(1, Math.min(10, value));
+        }
+
+        function updateMenuQuantity(produitId, change) {
+            const input = document.getElementById(`quantite-menu-${produitId}`);
+            let newValue = parseInt(input.value) + change;
+            if (newValue < 1) newValue = 1;
+            if (newValue > 10) newValue = 10;
+            input.value = newValue;
+        }
+
+        // Gestion de la soumission de commande
+        function submitOrder(event) {
+            event.preventDefault();
+
+            const cartItems = document.querySelectorAll('#cartItemsContainer > div');
+            if (cartItems.length === 0) {
+                alert('Votre panier est vide !');
+                return;
+            }
+
+            // Préparation des données
+            const formData = {
+                user: {},
+                cart: []
+            };
+
+            const userIdElement = document.getElementById('userId');
+            if (userIdElement) {
+                formData.user.id = userIdElement.value;
+            } else {
+                formData.user.prenom = document.getElementById('prenom').value;
+                formData.user.nom = document.getElementById('nom').value;
+            }
+
+            cartItems.forEach(item => {
+                // Pour les produits classiques, l'id est de la forme "panier-{produitId}-{taille}"
+                // Pour les menus, on peut enregistrer l'id complet et éventuellement un flag "menu"
+                if (item.dataset.type === 'menu') {
+                    formData.cart.push({
+                        menuId: item.id,
+                        quantity: parseInt(item.querySelector('.panier-quantite').textContent)
+                    });
+                } else {
+                    const [_, produitId, taille] = item.id.split('-');
+                    formData.cart.push({
+                        produitId: parseInt(produitId),
+                        taille: taille,
+                        quantity: parseInt(item.querySelector('.panier-quantite').textContent)
+                    });
+                }
+            });
+
+            fetch('/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('cartItemsContainer').innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
+                        document.getElementById('deliveryFormContainer').style.display = 'none';
+                        bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+                        window.location.href = '/commande';
+                    } else {
+                        alert('Erreur : ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Une erreur est survenue lors de la validation du panier.');
+                });
+        }
+
+        // Exemple de tri (si nécessaire)
+        function triCategorie() {
+            const sortValue = document.getElementById('sortSelect').value;
+            const produitsListe = document.querySelector('.produits-liste');
+            const produits = Array.from(produitsListe.querySelectorAll('.produit-cadre'));
+
+            let sortFunction;
+            switch (sortValue) {
+                case 'category':
+                    sortFunction = (a, b) => a.dataset.category.localeCompare(b.dataset.category);
+                    break;
+                case 'price_asc':
+                    sortFunction = (a, b) => getPrice(a) - getPrice(b);
+                    break;
+                case 'price_desc':
+                    sortFunction = (a, b) => getPrice(b) - getPrice(a);
+                    break;
+                case 'name_asc':
+                    sortFunction = (a, b) => getName(a).localeCompare(getName(b));
+                    break;
+                case 'name_desc':
+                    sortFunction = (a, b) => getName(b).localeCompare(getName(a));
+                    break;
+            }
+
+            produits.sort(sortFunction);
+            produitsListe.innerHTML = '';
+            produits.forEach(produit => produitsListe.appendChild(produit));
+        }
+
+        function getPrice(produitElement) {
+            const prixElement = produitElement.querySelector('.produit-prix');
+            if (prixElement) {
+                const matches = prixElement.textContent.match(/(\d+\.?\d*)\s*€/);
+                return matches ? parseFloat(matches[1]) : 0;
+            }
+            const select = produitElement.querySelector('.taille-select');
+            if (select && select.options.length > 0) {
+                const matches = select.options[0].textContent.split(' - ')[1].match(/(\d+\.?\d*)\s*€/);
+                return matches ? parseFloat(matches[1]) : 0;
+            }
+            return 0;
+        }
+
+        function getName(produitElement) {
+            const nameElement = produitElement.querySelector('.produit-nom');
+            return nameElement ? nameElement.textContent.trim().toLowerCase() : '';
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            triCategorie();
+        });
+
+    </script>
+    <style>
+        .product-name {
+            max-width: 100px;
+            /* Ajustez cette valeur selon vos besoins */
+            white-space: nowrap;
+            /* Pour empêcher le retour à la ligne si vous le souhaitez */
+            overflow: hidden;
+            /* Masquer le texte qui dépasse */
+            text-overflow: ellipsis;
+            /* Afficher "..." pour le texte tronqué */
+        }
+
+        /* Pour les écrans encore plus petits, vous pouvez réduire la largeur maximale */
+        @media (max-width: 414px) {
+            .product-name {
+                max-width: 100px;
+                /* Par exemple, ajuster en fonction de vos tests */
+            }
+        }
+        .transparent-frame {
+            width: 75%;                     /* 75% de la largeur de l'écran (ou du conteneur parent) */
+             /* Bordure fine et transparente */
+            padding: 10px;                  /* Un peu d'espace intérieur */
+            box-sizing: border-box;         /* Pour inclure padding et bordure dans la largeur */
+            background-color: transparent;  /* Fond transparent */
+            border: transparent;
+        }
+        .quantity-container {
+            display: flex;
+            align-items: center;   /* Centre verticalement */
+            justify-content: center; /* Centre horizontalement (si nécessaire) */
+        }
+
+
+    </style>
+</body>
+
 </html>

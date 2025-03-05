@@ -111,7 +111,7 @@
                                         <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
                                       </div>
                                     </div>
-                                    <button class="produit-bouton btn btn-danger" onclick="openConfirmModal({{ produit.id }})">
+                                    <button class="produit-bouton btn btn-danger" onclick="openConfirmModal({{ produit.id }}, this)">
                                       Ajouter au panier
                                     </button>
                                   </div>
@@ -150,7 +150,7 @@
                                 <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
                               </div>
                             </div>
-                            <button class="produit-bouton btn btn-danger" onclick="openConfirmModal({{ produit.id }})">
+                            <button class="produit-bouton btn btn-danger" onclick="openConfirmModal({{ produit.id }}, this)">
                               Ajouter au panier
                             </button>
                           </div>
@@ -201,7 +201,7 @@
                             <button type="button" class="btn btn-secondary" onclick="updateMenuQuantity({{ produit.id }}, 1)">+</button>
                           </div>
                         </div>
-                        <button class="btn btn-danger mt-2" onclick="ajouterMenuAuPanier({{ produit.id }})">
+                        <button class="btn btn-danger mt-2" onclick="openConfirmMenuModal({{ produit.id }}, this)">
                           Ajouter le menu
                         </button>
                       </div>
@@ -232,6 +232,24 @@
           </div>
         </div>
       </div>
+    </div>
+    <!-- Modal de confirmation pour les menus -->
+    <div class="modal fade" id="confirmAddMenuModal" tabindex="-1" aria-labelledby="confirmAddMenuModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmAddMenuModalLabel">Confirmation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    Êtes-vous sûr de vouloir ajouter ce menu au panier ?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="confirmAddMenuButton">Confirmer</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Modal du panier avec le formulaire de validation de commande -->

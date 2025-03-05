@@ -56,8 +56,6 @@ class CheckoutController extends AbstractController
             
             // Traitement de chaque article du panier
             foreach ($cartItems as $item) {
-                // Si l'item est un menu (présence de la clé "menuId")
-                // Si l'item est un menu (présence de la clé "menuId")
                 if (isset($item['menuId'])) {
                     $menuId = $item['menuId'];
                     // Format attendu : "menu-{produitId}-{timestamp}"
@@ -77,6 +75,7 @@ class CheckoutController extends AbstractController
                         return new JsonResponse(['success' => false, 'error' => "Aucune famille trouvée pour le menu produit ID $menuProduitId"], 400);
                     }
                     $menuTotalComponents = 0;
+                    $componentsLines = [];
                     
                     // Pour chaque famille, récupérer l'avoir par défaut via la table composer
                     foreach ($familles as $famille) {
@@ -93,13 +92,12 @@ class CheckoutController extends AbstractController
                         }
                         $menuTotalComponents += $avoir['prix'];
                         
-                        // Ajout d'une ligne de commande pour ce composant du menu
-                        $orderLines[] = [
-                            'produit_id'   => $avoir['produit_id'], // Utilisation de l'ID du produit composant
+                        // Stockage de la ligne correspondant à ce composant du menu
+                        $componentsLines[] = [
+                            'produit_id'   => $avoir['produit_id'], // ID du produit composant
                             'taille_id'    => $avoir['taille_id'],
                             'quantite'     => $quantity,
                             'prix'         => $avoir['prix'],
-                            'numero_ordre' => $orderLineNumber++,
                             'numero_menu'  => null,
                         ];
                     }
@@ -114,27 +112,40 @@ class CheckoutController extends AbstractController
                     }
                     $reduction = $menuProduit['valeur'];
                     
-                    // Mise à jour du prix total pour ce menu :
-                    // On applique la réduction sur le prix total des composants
+                    // Calcul du prix total pour ce menu en appliquant la réduction sur le total des composants
                     $totalPrice += ($menuTotalComponents - $reduction) * $quantity;
                     
                     // Génération d'un numéro aléatoire pour identifier le groupe de menu
                     $numeroMenu = random_int(100000000, 999999999);
                     
-                    // On attribue à la ligne de réduction le même numéro d'ordre que le dernier composant inséré
-                    $discountOrderNumber = $orderLineNumber - 1;
-                    
-                    // Insertion de la ligne de réduction dans la commande
-                    $orderLines[] = [
+                    // Préparer la ligne du menu (la réduction)
+                    $menuLine = [
                          'produit_id'   => $menuProduitId,  // ID du menu
                          'taille_id'    => null,
                          'quantite'     => $quantity,
                          'prix'         => -$reduction,  // Valeur négative pour la réduction
-                         'numero_ordre' => $discountOrderNumber,
                          'numero_menu'  => $numeroMenu,
                     ];
+                    
+                    // On souhaite afficher la ligne du menu en premier, suivie des composants
+                    // On réassemble le tableau orderLines en assignant les numéros d'ordre dans l'ordre d'affichage
+                    $menuOrderLines = [];
+                    $orderLineNumber = 1;
+                    
+                    // D'abord la ligne du menu (réduction)
+                    $menuLine['numero_ordre'] = $orderLineNumber++;
+                    $menuOrderLines[] = $menuLine;
+                    
+                    // Puis les lignes pour chaque composant du menu
+                    foreach ($componentsLines as $line) {
+                        $line['numero_ordre'] = $orderLineNumber++;
+                        $menuOrderLines[] = $line;
+                    }
+                    
+                    // Fusionner avec le tableau global des lignes de commande
+                    // (Si vous avez déjà d'autres lignes dans $orderLines, on peut les ajouter ensuite)
+                    $orderLines = array_merge($orderLines ?? [], $menuOrderLines);
                 } else {
-                
                     // Traitement d'un produit normal
                     $produitId   = $item['produitId'];
                     $tailleUnite = $item['taille']; // ex : "unique", "25cl", "500g", etc.

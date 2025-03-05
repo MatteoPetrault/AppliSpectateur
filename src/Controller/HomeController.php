@@ -46,7 +46,7 @@ class HomeController extends AbstractController
             }
         }
 
-        $produits = $produitRepository->findBy(['en_ligne' => 1]);
+        $produits = $produitRepository->findBy(['en_ligne' => 1], ['nom' => 'ASC']);
 
         // Grouper les produits par catégorie
         foreach ($produits as $produit) {
