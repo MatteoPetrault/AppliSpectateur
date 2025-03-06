@@ -18,6 +18,7 @@
         let currentButton = null;
         let currentMenuId = null;
         let currentMenuButton = null;
+        let currentMenuProduitId = null;
 
         // Ouvre le modal de confirmation pour ajouter un produit classique au panier
         function openConfirmModal(produitId, button) {
@@ -38,7 +39,66 @@
             let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddMenuModal'));
             confirmModal.show();
         }
+        function openMenuModal(produitId, button) {
+            // Récupère le contenu complet de la composition du menu stocké dans le conteneur caché
+            var compositionHtml = document.getElementById('menu-composition-' + produitId).innerHTML;
+            
+            // Place ce contenu dans le corps du modal
+            document.getElementById('modalMenuContent').innerHTML = compositionHtml;
+            
+            // Affiche le modal
+            let menuModal = new bootstrap.Modal(document.getElementById('menuCompositionModal'));
+            menuModal.show();
+        }
+        function ajouterMenuDirect(produitId, button) {
+            // Appelle la fonction existante pour ajouter le menu au panier
+            ajouterMenuAuPanier(produitId);
 
+            // Ferme le modal de composition du menu
+            let menuModalEl = document.getElementById('menuCompositionModal');
+            let menuModalInstance = bootstrap.Modal.getInstance(menuModalEl);
+            if(menuModalInstance) {
+                menuModalInstance.hide();
+            }
+            
+        }
+        // Pour chaque bloc de composition de menu
+        document.querySelectorAll('.menu-composition').forEach((menuComposition) => {
+            // Sélectionner le bouton "Ajouter le menu" (celui qui appelle ajouterMenuDirect)
+            const addButton = menuComposition.querySelector('button[onclick^="ajouterMenuDirect"]');
+            if (addButton) {
+                addButton.addEventListener('click', function(event) {
+                    // Récupérer la valeur d'économie depuis l'attribut data-valeur du menu
+                    const valeur = parseFloat(menuComposition.dataset.valeur);
+                    if (isNaN(valeur) || valeur <= 0) return;
+                    
+                    // Calculer le total des prix sélectionnés dans les menus
+                    let sum = 0;
+                    const selects = menuComposition.querySelectorAll('.menu-select');
+                    selects.forEach(select => {
+                        const selectedOption = select.options[select.selectedIndex];
+                        const priceMatch = selectedOption.textContent.match(/\((\d+\.?\d*)€\)/);
+                        if (priceMatch) {
+                            const price = parseFloat(priceMatch[1]);
+                            sum += price;
+                        }
+                    });
+
+                    // Construire le message à afficher avec des balises HTML pour le saut de ligne
+                    const message = `Félicitations !<br>
+                    En composant ce menu, vous bénéficiez d'une réduction de ${valeur}€.<br>
+                    Prix initial : ${sum.toFixed(2)}€<br>
+                    Prix final : ${(sum - valeur).toFixed(2)}€.`;
+
+                    // Utilisez innerHTML pour que les balises HTML soient interprétées
+                    document.getElementById('savingsMessage').innerHTML = message;
+                    
+                    // Afficher le modal d'économie
+                    const modal = new bootstrap.Modal(document.getElementById('savingsModal'));
+                    modal.show();
+                });
+            }
+        });
         // Confirmation d'ajout de menu
         document.getElementById('confirmAddMenuButton').addEventListener('click', function() {
             if (currentMenuId !== null) {

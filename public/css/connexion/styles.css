@@ -52,7 +52,7 @@ h1 {
 
 .auth-form button {
     padding: 12px;
-    background-color: #007bff;
+    background-color: #dc3545;
     color: white;
     border: none;
     border-radius: 4px;
@@ -60,7 +60,7 @@ h1 {
 }
 
 .auth-form button:hover {
-    background-color: #0056b3;
+    background-color: #dc3545;
 }
 
 .options {
@@ -69,7 +69,7 @@ h1 {
 }
 
 .options a {
-    color: #007bff;
+    color: #dc3545;
     text-decoration: none;
 }
 

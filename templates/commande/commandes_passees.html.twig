@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mes commandes{% endblock %}</title>
+    <link rel="stylesheet" href="{{ asset('css/home/styles2.css') }}">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <meta http-equiv="refresh" content="20"> <!-- Refresh toutes les 20 secondes -->
+</head>
+<body>
+
+    <div class="container mt-4">
+        <h1 class="text-center">Mes Commandes du Jour</h1>
+
+        <a href="{{ path('home') }}" class="btn btn-secondary mb-4">Retour vers l'accueil</a> <!-- Bouton Retour -->
+
+        {% if commandes is empty %}
+            <p class="text-center text-muted">Vous n'avez passé aucune commande aujourd'hui.</p>
+        {% else %}
+            <div class="row">
+                {% for commande in commandes %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Commande #{{ commande.id }}</h5>
+                                <button class="btn btn-link" data-toggle="collapse" data-target="#collapse{{ commande.id }}" aria-expanded="false" aria-controls="collapse{{ commande.id }}">
+                                    {% if commande.statut.libelle != 'Terminé' %}
+                                        Afficher
+                                    {% else %}
+                                        Voir détails
+                                    {% endif %}
+                                </button>
+                            </div>
+                            <div id="collapse{{ commande.id }}" class="collapse">
+                                <div class="card-body">
+                                    <p><strong>Date :</strong> {{ commande.date|date('d/m/Y') }} à {{ commande.heure|date('H:i') }}</p>
+
+                                    <p><strong>Produits :</strong></p>
+                                    <ul>
+                                        {% for ligneCommande in commande.ligneCommandes %}
+                                            <li>{{ ligneCommande.produit.nom }} (x{{ ligneCommande.quantite }})</li>
+                                        {% endfor %}
+                                    </ul>
+
+                                    <p><strong>Prix Total :</strong> {{ commande.prixTotal|number_format(2, ',', ' ') }} €</p> <!-- Prix total -->
+
+                                    <p><strong>Statut :</strong> {{ commande.statut.libelle }}</p>
+
+                                    {% if commande.statut.libelle != 'Terminé' %}
+                                        <a href="{{ path('commande', {id: commande.id}) }}" class="btn btn-primary">Voir l'évolution de la commande</a>
+                                    {% else %}
+                                        <button class="btn btn-secondary" disabled>Commande Terminée</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

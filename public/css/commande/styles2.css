@@ -1,0 +1,33 @@
+.card {
+    border-radius: 10px;
+    border: 1px solid #ddd;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.card-body p {
+    margin-bottom: 0.75rem;
+}
+
+.card-body .btn {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .card-body p {
+        font-size: 0.9rem;
+    }
+
+    .card-body .btn {
+        font-size: 0.85rem;
+    }
+}

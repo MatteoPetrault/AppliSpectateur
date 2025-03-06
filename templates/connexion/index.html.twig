@@ -33,7 +33,7 @@
 <body>
     <div class="container">
 
-        <h1>Bienvenue sur l'Application</h1>
+        <h1>Le Fauteuil Rouge</h1>
         {% if app.session.flashbag.has('error') %}
             {% for message in app.session.flashbag.get('error') %}
                 <div class="alert alert-danger" role="alert">
@@ -61,7 +61,7 @@
                 <label for="password">Mot de passe</label>
                 <input type="password" id="password" name="password" required>
 
-                <button  type="submit"  class="btn btn-danger">Se connecter</button>
+                <button  type="submit" class="btn btn-danger">Se connecter</button>
             </form>
             
             <div class="options">

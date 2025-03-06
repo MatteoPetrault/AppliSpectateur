@@ -2,12 +2,14 @@
 namespace App\Controller;
 
 use App\Entity\Client;
+use App\Entity\Commande;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+
 
 class ConnexionController extends AbstractController
 {
@@ -144,6 +146,38 @@ class ConnexionController extends AbstractController
             'email' => $email
         ]);
     }
+    #[Route('/commande_passer', name: 'commande_passer')]
+    public function commandesPassees(EntityManagerInterface $em, SessionInterface $session): Response
+    {
+        // Vérifier si l'utilisateur est connecté
+        $user = $session->get('user');
+        if (!$user) {
+            $this->addFlash('error', 'Vous devez être connecté pour voir vos commandes.');
+            return $this->redirectToRoute('connexion');
+        }
+
+        // Récupérer l'ID de l'utilisateur
+        $clientId = $user['id'];
+
+        // Déterminer la date du jour
+        $today = new \DateTime();
+        $today->setTime(0, 0, 0); // Début de la journée
+
+        // Requête pour récupérer les commandes du jour pour cet utilisateur
+        $commandes = $em->getRepository(Commande::class)->createQueryBuilder('c')
+            ->where('c.client = :clientId')
+            ->andWhere('c.date >= :today')
+            ->setParameter('clientId', $clientId)
+            ->setParameter('today', $today)
+            ->orderBy('c.date', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return $this->render('commande/commandes_passees.html.twig', [
+            'commandes' => $commandes,
+        ]);
+    }
+
 
 
 
@@ -153,6 +187,8 @@ class ConnexionController extends AbstractController
         $request->getSession()->remove('user');
         return $this->redirectToRoute('connexion');
     }
+
+    
 }
 
 

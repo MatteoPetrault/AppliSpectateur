@@ -179,7 +179,8 @@ header {
 /* On stylise le tableau avec Bootstrap .table */
 #cartTable {
     width: 100%;
-    display: none; /* On l’affiche en JS si le panier n’est pas vide */
+    display: none;
+    /* On l’affiche en JS si le panier n’est pas vide */
 }
 
 #cartTable th,
@@ -197,13 +198,14 @@ header {
 #cartTable td .input-group {
     max-width: 120px;
 }
+
 /* Style pour les modaux de confirmation */
 .modal-content {
     border: 2px solid var(--rouge-cinema);
 }
 
 .modal-header {
-    background-color: var(--noir-cinema);
+    background-color: #dc3545;
     color: white;
 }
 
@@ -215,4 +217,75 @@ header {
 #confirmAddMenuButton:hover {
     background-color: #a71a2f;
     border-color: #a71a2f;
+}
+/* Style du badge de réduction incliné */
+.reduction-badge {
+    background-color: var(--rouge-cinema);
+    color: white;
+    padding: 0.2rem 0.1rem;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    /* Inclinaison du badge */
+    transform: rotate(-15deg); /* Ajustez l'angle selon vos préférences */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    display: inline-block; /* Assure que la rotation s'applique correctement */
+    border-radius: 5px; /* Ajoute un léger arrondi aux coins */
+}
+
+/* Effet de halo pour un look dynamique */
+.reduction-badge::before {
+    content: "";
+    position: absolute;
+    top: -5%;
+    left: -5%;
+    width: 110%;
+    height: 110%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    z-index: -1;
+    transform: rotate(15deg); /* Ajustez l'angle pour correspondre à la rotation du badge */
+    border-radius: 50%;
+}
+
+/* Animation optionnelle pour un effet visuel */
+@keyframes pulse {
+    0% {
+        transform: rotate(-15deg) scale(1);
+    }
+    50% {
+        transform: rotate(-15deg) scale(1.1);
+    }
+    100% {
+        transform: rotate(-15deg) scale(1);
+    }
+}
+
+.reduction-badge:hover {
+    animation: pulse 1s infinite; /* Ajoute une animation au survol */
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+
+.welcome-message {
+    font-family: 'Pacifico', cursive;
+    font-size: 2rem;
+    color: #ff0000; /* Une belle couleur orange */
+    text-align: center;
+    margin-top: 20px;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 1.5s ease-in-out;
+}
+
+/* Animation pour un effet d'apparition fluide */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
