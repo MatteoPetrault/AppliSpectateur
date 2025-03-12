@@ -150,6 +150,7 @@ header {
     transition: background-color 0.2s;
     padding: 1rem;
     background-color: rgba(0, 0, 0, 0.03);
+    border-color: var(--rouge-cinema);
 }
 
 .subcategory-header {
@@ -289,3 +290,9 @@ header {
         transform: translateY(0);
     }
 }
+.card.selected {
+    background-color: #d3d3d3; /* Couleur de fond grisée */
+    opacity: 0.7;
+    transition: background-color 0.3s, opacity 0.3s;
+  }
+  

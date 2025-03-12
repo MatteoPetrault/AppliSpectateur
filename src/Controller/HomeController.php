@@ -1,5 +1,5 @@
 <?php
-
+// src/Controller/HomeController.php
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,24 +20,23 @@ use App\Entity\Statut;
 class HomeController extends AbstractController
 {
     private $entityManager;
-
+    
     public function __construct(EntityManagerInterface $entityManager)
     {
         $this->entityManager = $entityManager;
     }
-
+    
     #[Route('/home', name: 'home')]
     public function index(
         ProduitRepository $produitRepository,
         CategorieRepository $categorieRepository,
         PossedeRepository $possedeRepository
     ): Response {
-        // Récupérer les catégories triées par ordre
         $categories = $categorieRepository->findAllOrderedByOrder();
         $allPossede = $possedeRepository->findAll();
         $subcategoriesByCategory = [];
         $groupedProducts = [];
-
+        
         foreach ($allPossede as $possede) {
             $category = $possede->getCategorie();
             if ($category) {
@@ -45,100 +44,132 @@ class HomeController extends AbstractController
                 $subcategoriesByCategory[$categoryId][] = $possede->getSousCategorie();
             }
         }
-
+        
         $produits = $produitRepository->findBy(['en_ligne' => 1], ['nom' => 'ASC']);
-
-        // Grouper les produits par catégorie
+        
         foreach ($produits as $produit) {
             $categoryId = $produit->getCategorie()->getId();
             if ($categoryId !== 8) { // Exclure les menus
                 $groupedProducts[$categoryId][] = $produit;
             }
         }
-
+        
         return $this->render('home/index.html.twig', [
             'groupedProducts' => $groupedProducts,
             'categories' => $categories,
             'subcategoriesByCategory' => $subcategoriesByCategory
         ]);
     }
-
-
-    /**
-     * @Route("/product/get-price", name="product_get_price", methods={"GET"})
-     */
-    public function getPrice(int $produit_id, int $taille_id): JsonResponse
+    
+    #[Route('/api/menu-items', name: 'api_menu_items')]
+    public function getMenuItems(Request $request): JsonResponse
     {
-        // Récupérer les entités 'Avoir' pour le produit et la taille spécifiés
-        $avoir = $this->entityManager->getRepository(Avoir::class)->findOneBy([
-            'produit' => $produit_id,
-            'taille' => $taille_id,
-        ]);
-
-        if ($avoir) {
-            return new JsonResponse([
-                'prix' => $avoir->getPrix(),
-            ]);
+        $type = $request->query->get('type');
+        
+        $query = $this->entityManager->createQueryBuilder()
+            ->select('a.id as avoirId', 'p.nom', 'p.valeur', 'a.prix', 't.unite as taille')
+            ->from(Produit::class, 'p')
+            ->join(Avoir::class, 'a', 'WITH', 'a.produit = p.id')
+            ->join('a.taille', 't')
+            ->where('p.en_ligne = 1');
+    
+        if ($type === 'snack') {
+            $query->andWhere('p.est_menu = 1');
+        } elseif ($type === 'drink') {
+            $query->andWhere('p.est_menu_boisson = 1');
         }
-
-        return new JsonResponse([
-            'prix' => 0,  // Retourner 0 si le produit ou la taille n'existent pas
-        ]);
+    
+        $items = $query->getQuery()->getArrayResult();
+    
+        return new JsonResponse($items);
     }
+    
     #[Route('/panier/ajouter-menu', name: 'ajouter_menu', methods: ['POST'])]
     public function ajouterMenu(Request $request): JsonResponse
     {
-        try {
-            $data = json_decode($request->getContent(), true);
-
-            if (!isset($data['produitId']) || !isset($data['avoirIds']) || !isset($data['quantity'])) {
-                return new JsonResponse(['success' => false, 'message' => 'Données manquantes'], 400);
-            }
-            // Récupération du produit principal
-            $menuProduit = $this->entityManager->getRepository(Produit::class)->find($data['produitId']);
-            $reduction = $menuProduit->getValeur(); // valeur unitaire
-                
-            // Calcul du prix total du menu
-            $composants = [];
-            $prixTotal = 0;
-            foreach ($data['avoirIds'] as $avoirId) {
-                $avoir = $this->entityManager->getRepository(Avoir::class)->find($avoirId);
-                $prixTotal += $avoir->getPrix();
-                $composants[] = $avoir->getProduit()->getNom() . ' (' . $avoir->getTaille()->getUnite() . ')';
-            }
-            
-            // Application de la réduction
-            $prixTotal -= $reduction;
-            $prixTotal = round($prixTotal, 2);
-            
+        $data = json_decode($request->getContent(), true);
     
-            // Stockage dans la session
+        if (!isset($data['snackId'], $data['drinkId'], $data['quantity'])) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Données manquantes. Requis : snackId, drinkId, quantity'
+            ], 400);
+        }
+    
+        try {
+            $snackAvoir = $this->entityManager->getRepository(Avoir::class)->find($data['snackId']);
+            $drinkAvoir = $this->entityManager->getRepository(Avoir::class)->find($data['drinkId']);
+    
+            if (!$snackAvoir || !$drinkAvoir) {
+                $errors = [];
+                if (!$snackAvoir) $errors[] = 'Snack introuvable';
+                if (!$drinkAvoir) $errors[] = 'Boisson introuvable';
+                
+                return new JsonResponse([
+                    'success' => false,
+                    'error' => implode(' et ', $errors)
+                ], 404);
+            }
+    
+            if (!$snackAvoir->getProduit()->isEstMenu()) {
+                return new JsonResponse([
+                    'success' => false,
+                    'error' => 'Le snack sélectionné ne fait pas partie des menus'
+                ], 400);
+            }
+    
+            if (!$drinkAvoir->getProduit()->isEstMenuBoisson()) {
+                return new JsonResponse([
+                    'success' => false,
+                    'error' => 'La boisson sélectionnée n\'est pas éligible aux menus'
+                ], 400);
+            }
+    
+            $snackDiscount = $snackAvoir->getProduit()->getValeur() ?? 0;
+            $drinkDiscount = $drinkAvoir->getProduit()->getValeur() ?? 0;
+            $totalDiscount = $snackDiscount + $drinkDiscount;
+            $discountDisplay = $totalDiscount; // Affichage sous forme d'un seul chiffre            
+            $total = ($snackAvoir->getPrix() + $drinkAvoir->getPrix() - $totalDiscount) * $data['quantity'];
+    
             $session = $request->getSession();
             $panier = $session->get('panier', []);
-            
-            $menuData = [
+    
+            // Modifier la section où le menu est ajouté au panier
+            $menuEntry = [
                 'type' => 'menu',
-                'produit_id' => $menuProduit->getId(),
-                'avoir_ids' => $data['avoirIds'],
-                'quantite' => $data['quantity'],
-                'prix_total' => $prixTotal,
-                'composants' => implode(', ', $composants),
-                'reduction' => $reduction
+                'snack' => [
+                    'id' => $snackAvoir->getProduit()->getId(),
+                    'nom' => $snackAvoir->getProduit()->getNom(),
+                    'taille' => $snackAvoir->getTaille()->getUnite(),
+                    'prix' => $snackAvoir->getPrix() // Conserver le prix original
+                ],
+                'drink' => [
+                    'id' => $drinkAvoir->getProduit()->getId(),
+                    'nom' => $drinkAvoir->getProduit()->getNom(),
+                    'taille' => $drinkAvoir->getTaille()->getUnite(),
+                    'prix' => $drinkAvoir->getPrix() // Conserver le prix original
+                ],
+                'quantity' => $data['quantity'],
+                'total' => ($snackAvoir->getPrix() + $drinkAvoir->getPrix() - $totalDiscount) * $data['quantity'],
+                'valeur' => $discountDisplay
             ];
-            
-            $panier[] = $menuData; // Ajout comme nouvel élément
+            $menuEntry['menuId'] = 'menu-' . $snackAvoir->getProduit()->getId() . '-' . time();
+    
+            $panier[] = $menuEntry;
             $session->set('panier', $panier);
     
             return new JsonResponse([
                 'success' => true,
-                'prixTotal' => $prixTotal,
-                'composants' => implode(' + ', $composants)
+                'total' => array_sum(array_column($panier, 'total')),
+                'panier' => $panier,
+                'valeur' => $discountDisplay
             ]);
     
         } catch (\Exception $e) {
-            return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Erreur serveur : ' . $e->getMessage()
+            ], 500);
         }
     }
-    
-
 }

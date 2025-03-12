@@ -68,6 +68,9 @@ class Produit
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $ref_produit = null;
 
+    #[ORM\Column]
+    private ?bool $est_menu_boisson = null;
+
     public function __construct()
     {
         $this->avoirs = new ArrayCollection();
@@ -267,6 +270,18 @@ class Produit
     public function setRefProduit(?string $ref_produit): static
     {
         $this->ref_produit = $ref_produit;
+
+        return $this;
+    }
+
+    public function isEstMenuBoisson(): ?bool
+    {
+        return $this->est_menu_boisson;
+    }
+
+    public function setEstMenuBoisson(bool $est_menu_boisson): static
+    {
+        $this->est_menu_boisson = $est_menu_boisson;
 
         return $this;
     }

@@ -7,8 +7,17 @@
     <title>Page d'accueil</title>
     <link rel="stylesheet" href="{{ asset('css/home/styles.css') }}">
     <!-- Bootstrap CSS (version 5) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+      .card.selected {
+        background-color: #d3d3d3; /* Fond grisé */
+        opacity: 0.7;
+        transition: background-color 0.3s, opacity 0.3s;
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -59,179 +68,171 @@
 
     <img src="/image/image1.jpg" class="logo" width="300" height="150" style="display: block; margin: auto;">
 
-    <!-- Dans home/index.html.twig -->
     <main class="container mt-3">
-      <div class="accordion" id="categoriesAccordion">
-        {% for category in categories %}
-          {% if category.id != 7 and groupedProducts[category.id] is defined %}
-            <div class="category-card card mb-3">
-              <div class="card-header d-flex justify-content-between align-items-center pe-3" 
-                   id="heading{{ category.id }}"
-                   role="button" 
-                   data-bs-toggle="collapse" 
-                   data-bs-target="#collapse{{ category.id }}" 
-                   aria-expanded="false" 
-                   aria-controls="collapse{{ category.id }}">
-                <h2 class="mb-0">
-                  {{ category.libelle }}
-                </h2>
-              </div>
-              <div id="collapse{{ category.id }}" 
-                   class="collapse" 
-                   aria-labelledby="heading{{ category.id }}" 
-                   data-bs-parent="#categoriesAccordion">
-                <div class="card-body">
-                  {% if subcategoriesByCategory[category.id] is defined %}
-                    <div class="subcategories-accordion">
-                      {% for subcategory in subcategoriesByCategory[category.id] %}
-                        <div class="subcategory-item mb-3">
-                          <div class="subcategory-header d-flex justify-content-between align-items-center pe-3"
-                               data-bs-toggle="collapse" 
-                               data-bs-target="#sub{{ subcategory.id }}">
-                            <h3 class="h5 mb-0">{{ subcategory.libelle }}</h3>
-                            <i class="fas fa-chevron-down"></i>
-                          </div>
-                          <div id="sub{{ subcategory.id }}" class="collapse">
-                            <div class="produits-liste pt-3">
-                              {% for produit in groupedProducts[category.id]|filter(p => p.sousCategorie and p.sousCategorie.id == subcategory.id) %}
-                                <div class="produit-cadre" 
-                                     data-category="{{ category.id }}"
-                                     data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
-                                  <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
-                                  <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
-                                  {% set nbTailles = produit.avoirs|length %}
-                                  {% if nbTailles == 1 %}
-                                    {% set seuleTaille = produit.avoirs|first %}
-                                    <p class="produit-prix">Prix : {{ seuleTaille.taille.unite }} {{ seuleTaille.prix }}€</p>
-                                  {% else %}
-                                    <label for="taille-{{ produit.id }}">Taille :</label>
-                                    <select id="taille-{{ produit.id }}" class="taille-select form-select">
-                                      {% for avoir in produit.avoirs %}
-                                        <option value="{{ avoir.taille.unite }}">{{ avoir.taille.unite }} - {{ avoir.prix }}€</option>
-                                      {% endfor %}
-                                    </select>
-                                  {% endif %}
-                                  <div class="quantity-wrapper">
-                                    <label for="quantite-{{ produit.id }}">Quantité :</label>
-                                    <div class="input-group" style="width: 150px;">
-                                      <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', -1)">-</button>
-                                      <input type="number" id="quantite-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
-                                      <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
-                                    </div>
-                                  </div>
-                                  <button class="produit-bouton btn btn-danger" onclick="openConfirmModal({{ produit.id }}, this)">
-                                    Ajouter au panier
-                                  </button>
-                                </div>
-                              {% endfor %}
-                            </div>
-                          </div>
-                        </div>
-                      {% endfor %}
-                    </div>
-                  {% else %}
-                    <div class="produits-liste">
-                      {% for produit in groupedProducts[category.id] %}
-                        <div class="produit-cadre" 
-                             data-category="{{ category.id }}"
-                             data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
-                          <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
-                          <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
-                          {% set nbTailles = produit.avoirs|length %}
-                          {% if nbTailles == 1 %}
-                            {% set seuleTaille = produit.avoirs|first %}
-                            <p class="produit-prix">Prix : {{ seuleTaille.taille.unite }} {{ seuleTaille.prix }}€</p>
-                          {% else %}
-                            <label for="taille-{{ produit.id }}">Taille :</label>
-                            <select id="taille-{{ produit.id }}" class="taille-select form-select">
-                              {% for avoir in produit.avoirs %}
-                                <option value="{{ avoir.taille.unite }}">{{ avoir.taille.unite }} - {{ avoir.prix }}€</option>
-                              {% endfor %}
-                            </select>
-                          {% endif %}
-                          <div class="quantity-wrapper">
-                            <label for="quantite-{{ produit.id }}">Quantité :</label>
-                            <div class="input-group" style="width: 150px;">
-                              <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', -1)">-</button>
-                              <input type="number" id="quantite-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
-                              <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
-                            </div>
-                          </div>
-                          <button class="produit-bouton btn btn-danger" onclick="openConfirmModal({{ produit.id }}, this)">
-                            Ajouter au panier
-                          </button>
-                        </div>
-                      {% endfor %}
-                    </div>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-          {% endif %}
+      {# Carte pour composer le menu avec un bouton stylé #}
+      <div class="category-card card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center pe-3" id="headingMenu">
+          <h2 class="mb-0">Composer mon menu</h2>
+        </div>
+        <div class="card-body text-center">
+          <button class="btn btn-primary btn-lg" onclick="openMenuComposer()">Composer votre menu</button>
+        </div>
+      </div>
 
-          {% if category.id == 7 and groupedProducts[category.id] is defined %}
-            <div class="category-card card mb-3">
-              <div class="card-header d-flex justify-content-between align-items-center pe-3" 
-                   id="heading{{ category.id }}"
-                   role="button" 
-                   data-bs-toggle="collapse" 
-                   data-bs-target="#collapse{{ category.id }}" 
-                   aria-expanded="false" 
-                   aria-controls="collapse{{ category.id }}">
-                <h2 class="mb-0">{{ category.libelle }}</h2>
-              </div>
-              <div id="collapse{{ category.id }}" 
-                   class="collapse" 
-                   aria-labelledby="heading{{ category.id }}" 
-                   data-bs-parent="#categoriesAccordion">
-                <div class="card-body">
-                  <div class="produits-liste">
-                    {% for produit in groupedProducts[category.id] %}
-                      <div class="produit-cadre menu-cadre">
-                        <h3 class="produit-nom">{{ produit.nom }}</h3>
-                        <div class="col-auto">
-                          <button class="btn btn-danger" type="button" data-bs-toggle="collapse" data-bs-target="#menu-composition-{{ produit.id }}">
-                            Voir le menu
-                          </button>
+      {# Boucle sur les catégories de produits #}
+      {% for category in categories %}
+        {% if category.id != 7 and groupedProducts[category.id] is defined %}
+          <div class="category-card card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center pe-3" 
+                 id="heading{{ category.id }}"
+                 role="button" 
+                 data-bs-toggle="collapse" 
+                 data-bs-target="#collapse{{ category.id }}" 
+                 aria-expanded="false" 
+                 aria-controls="collapse{{ category.id }}">
+              <h2 class="mb-0">
+                {{ category.libelle }}
+              </h2>
+            </div>
+            <div id="collapse{{ category.id }}" 
+                 class="collapse" 
+                 aria-labelledby="heading{{ category.id }}" 
+                 data-bs-parent="#categoriesAccordion">
+              <div class="card-body">
+                {% if subcategoriesByCategory[category.id] is defined %}
+                  <div class="subcategories-accordion">
+                    {% for subcategory in subcategoriesByCategory[category.id] %}
+                      <div class="subcategory-item mb-3">
+                        <div class="subcategory-header d-flex justify-content-between align-items-center pe-3"
+                             data-bs-toggle="collapse" 
+                             data-bs-target="#sub{{ subcategory.id }}">
+                          <h3 class="h5 mb-0">{{ subcategory.libelle }}</h3>
+                          <i class="fas fa-chevron-down"></i>
                         </div>
-                         <div class="menu-composition collapse" id="menu-composition-{{ produit.id }}" data-valeur="{{ produit.valeur }}">
-                          <div class="menu-options">
-                            {% for famille in produit.familles %}
-                              <div class="famille mb-3">
-                                <label class="form-label">{{ famille.libelle }}</label>
-                                <select class="form-select menu-select" data-famille="{{ famille.id }}">
-                                  {% for composer in famille.composers %}
-                                    {% set avoir = composer.avoir %}
-                                    <option value="{{ avoir.id }}">
-                                      {{ avoir.produit.nom }} - {{ avoir.taille.unite }} ({{ avoir.prix }}€)
-                                    </option>
-                                  {% endfor %}
-                                </select>
+                        <div id="sub{{ subcategory.id }}" class="collapse">
+                          <div class="produits-liste pt-3">
+                            {% for produit in groupedProducts[category.id]|filter(p => p.sousCategorie and p.sousCategorie.id == subcategory.id) %}
+                              <div class="produit-cadre" 
+                                   data-category="{{ category.id }}"
+                                   data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
+                                <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
+                                <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
+                                {% set nbTailles = produit.avoirs|length %}
+                                {% if nbTailles == 1 %}
+                                  {% set seuleTaille = produit.avoirs|first %}
+                                  <p class="produit-prix">Prix : {{ seuleTaille.taille.unite }} {{ seuleTaille.prix }}€</p>
+                                {% else %}
+                                  <label for="taille-{{ produit.id }}">Taille :</label>
+                                  <select id="taille-{{ produit.id }}" class="taille-select form-select">
+                                    {% for avoir in produit.avoirs %}
+                                      <option value="{{ avoir.taille.unite }}">{{ avoir.taille.unite }} - {{ avoir.prix }}€</option>
+                                    {% endfor %}
+                                  </select>
+                                {% endif %}
+                                <div class="quantity-wrapper">
+                                  <label for="quantite-{{ produit.id }}">Quantité :</label>
+                                  <div class="input-group" style="width: 150px;">
+                                    <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', -1)">-</button>
+                                    <input type="number" id="quantite-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
+                                    <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
+                                  </div>
+                                </div>
+                                <button class="produit-bouton btn btn-danger" onclick="openConfirmModal({{ produit.id }}, this)">
+                                  Ajouter au panier
+                                </button>
                               </div>
                             {% endfor %}
                           </div>
-                          <div class="quantity-wrapper">
-                            <label>Quantité :</label>
-                            <div class="input-group" style="width: 150px;">
-                              <button type="button" class="btn btn-secondary" onclick="updateMenuQuantity({{ produit.id }}, -1)">-</button>
-                              <input type="number" id="quantite-menu-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
-                              <button type="button" class="btn btn-secondary" onclick="updateMenuQuantity({{ produit.id }}, 1)">+</button>
-                            </div>
-                          </div>
-                          <button class="btn btn-danger mt-2" onclick="ajouterMenuDirect({{ produit.id }}, this)">Ajouter le menu</button>
                         </div>
                       </div>
                     {% endfor %}
                   </div>
+                {% else %}
+                  <div class="produits-liste">
+                    {% for produit in groupedProducts[category.id] %}
+                      <div class="produit-cadre" 
+                           data-category="{{ category.id }}"
+                           data-subcategory="{{ produit.sousCategorie ? produit.sousCategorie.id : '' }}">
+                        <img src="{{ produit.refProduit }}" alt="{{ produit.nom }}" class="produit-image">
+                        <h3 id="nom-{{ produit.id }}" class="produit-nom">{{ produit.nom }}</h3>
+                        {% set nbTailles = produit.avoirs|length %}
+                        {% if nbTailles == 1 %}
+                          {% set seuleTaille = produit.avoirs|first %}
+                          <p class="produit-prix">Prix : {{ seuleTaille.taille.unite }} {{ seuleTaille.prix }}€</p>
+                        {% else %}
+                          <label for="taille-{{ produit.id }}">Taille :</label>
+                          <select id="taille-{{ produit.id }}" class="taille-select form-select">
+                            {% for avoir in produit.avoirs %}
+                              <option value="{{ avoir.taille.unite }}">{{ avoir.taille.unite }} - {{ avoir.prix }}€</option>
+                            {% endfor %}
+                          </select>
+                        {% endif %}
+                        <div class="quantity-wrapper">
+                          <label for="quantite-{{ produit.id }}">Quantité :</label>
+                          <div class="input-group" style="width: 150px;">
+                            <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', -1)">-</button>
+                            <input type="number" id="quantite-{{ produit.id }}" value="1" min="1" max="10" class="form-control text-center">
+                            <button type="button" class="btn btn-secondary" onclick="updateQuantity('{{ produit.id }}', 1)">+</button>
+                          </div>
+                        </div>
+                        <button class="produit-bouton btn btn-danger" onclick="openConfirmModal({{ produit.id }}, this)">
+                          Ajouter au panier
+                        </button>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}  
+    </main>
+
+    {# Modal pour la composition du menu #}
+    <div class="modal fade" id="menuComposerModal" tabindex="-1" aria-labelledby="menuComposerModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="menuComposerModalLabel">Composition du menu</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Étape 1 : Choix du snack -->
+            <div id="menuStep1" class="menu-step">
+              <h4>Étape 1 : Choisissez votre snack</h4>
+              <div class="row" id="snackOptions"></div>
+            </div>
+            <!-- Étape 2 : Choix de la boisson -->
+            <div id="menuStep2" class="menu-step d-none">
+              <h4>Étape 2 : Choisissez votre boisson</h4>
+              <div class="row" id="drinkOptions"></div>
+            </div>
+            <!-- Récapitulatif du menu -->
+            <div id="menuSummary" class="d-none">
+              <hr>
+              <h4>Récapitulatif du menu</h4>
+              <div id="selectedItems"></div>
+              <div class="quantity-wrapper mt-3">
+                <label>Quantité :</label>
+                <div class="input-group" style="width: 150px;">
+                  <button type="button" class="btn btn-secondary" onclick="updateMenuQuantity(-1)">-</button>
+                  <input type="number" id="menuQuantity" value="1" min="1" max="10" class="form-control text-center">
+                  <button type="button" class="btn btn-secondary" onclick="updateMenuQuantity(1)">+</button>
                 </div>
               </div>
             </div>
-          {% endif %}
-        {% endfor %}  
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-secondary d-none" id="previousStepButton" onclick="previousStep()">Retour</button>
+            <button type="button" class="btn btn-danger d-none" id="confirmMenuButton" onclick="addMenuToCart()">Confirmer le menu</button>
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
 
-    <!-- Modal de confirmation pour l'ajout au panier -->
+    {# Modal de confirmation pour l'ajout au panier #}
     <div class="modal fade" id="confirmAddModal" tabindex="-1" aria-labelledby="confirmAddModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -250,8 +251,7 @@
       </div>
     </div>
 
-
-    <!-- Modal de confirmation pour les menus -->
+    {# Modal de confirmation pour les menus #}
     <div class="modal fade" id="confirmAddMenuModal" tabindex="-1" aria-labelledby="confirmAddMenuModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -269,25 +269,30 @@
         </div>
       </div>
     </div>
-    <!-- Modal de succès pour les économies -->
+    
+    {# Modal de succès stylé #}
     <div class="modal fade" id="savingsModal" tabindex="-1" aria-labelledby="savingsModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title" id="savingsModalLabel">Merci !</h5>
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+          <div class="modal-header bg-gradient text-white border-0 rounded-top-4" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);">
+            <h5 class="modal-title fw-bold" id="savingsModalLabel">Félicitations !</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
           </div>
-          <div class="modal-body">
-            <p id="savingsMessage"></p>
+          <div class="modal-body text-center py-4">
+            <i class="bi bi-check-circle-fill text-success fs-1"></i>
+            <p id="savingsMessage" class="mt-3 fs-5 text-muted">Votre économie a bien été enregistrée.</p>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Fermer</button>
+          <div class="modal-footer border-0 justify-content-center">
+            <button type="button" class="btn btn-lg px-4 py-2 text-white rounded-pill" data-bs-dismiss="modal" 
+                    style="background: linear-gradient(135deg, #ff416c, #ff4b2b); border: none; transition: 0.3s;">
+              <strong>OK</strong>
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Modal du panier avec le formulaire de validation de commande -->
+    {# Modal du panier avec le formulaire de validation de commande #}
     <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-fullscreen-sm-down">
         <div class="modal-content">
@@ -296,15 +301,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
           </div>
           <div class="modal-body">
-            <!-- Conteneur pour les articles du panier -->
             <div id="cartItemsContainer">
               <p id="emptyCartMsg">Votre panier est vide.</p>
             </div>
-            <!-- Section pour le total de la commande -->
             <div class="total-section" style="text-align: right; margin-top: 20px;">
               <h5>Total de la commande : <span id="totalPrice">0.00€</span></h5>
             </div>
-            <!-- Conteneur pour le formulaire de livraison, masqué par défaut -->
             <div id="deliveryFormContainer" style="display: none;">
               <hr>
               <h5>Informations de Livraison</h5>
@@ -328,7 +330,7 @@
       </div>
     </div>
 
-    <!-- Modal de composition du menu -->
+    {# Modal de composition du menu (ancienne version, à retirer si non utilisé) #}
     <div class="modal fade" id="menuCompositionModal" tabindex="-1" aria-labelledby="menuCompositionModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -337,7 +339,6 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
           </div>
           <div class="modal-body" id="modalMenuContent">
-            <!-- Le contenu complet du menu sera inséré ici via JavaScript -->
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
@@ -346,7 +347,7 @@
       </div>
     </div>
 
-    <!-- Panier flottant -->
+    {# Panier flottant #}
     <div id="floatingCart" class="floating-cart" onclick="openCartModal()">
       <img src="/image/panier2.png" alt="Panier" width="40" height="40">
       <span id="floatingCartCount" class="cart-count">0</span>

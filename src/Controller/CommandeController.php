@@ -92,6 +92,25 @@ class CommandeController extends AbstractController
 
         return new JsonResponse(['success' => true, 'message' => 'Avis enregistré avec succès']);
     }
+    #[Route('/commande/{id}/annuler', name: 'commande_annuler', methods: ['POST'])]
+    public function annulerCommande(EntityManagerInterface $entityManager, int $id): JsonResponse
+    {
+        $commande = $entityManager->getRepository(Commande::class)->find($id);
+        
+        if (!$commande) {
+            return new JsonResponse(['success' => false, 'message' => 'Commande non trouvée']);
+        }
+
+        $commande->setStatut($this->getStatutAnnule($entityManager));
+        $entityManager->flush();
+
+        return new JsonResponse(['success' => true]);
+    }
+
+    private function getStatutAnnule(EntityManagerInterface $em)
+    {
+        return $em->getRepository(Statut::class)->findOneBy(['libelle' => 'Annulé']);
+    }
 
 
 }

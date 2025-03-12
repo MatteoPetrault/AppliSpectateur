@@ -29,42 +29,47 @@
 
         <div class="status-message" id="statusMessage"></div>
         <div id="paymentNotice"></div>
-        <div id="feedbackSection" class="feedback-section">
-            <h3>Votre avis compte !</h3>
-            <div class="star-rating">
-                <span onclick="rate(1)">★</span>
-                <span onclick="rate(2)">★</span>
-                <span onclick="rate(3)">★</span>
-                <span onclick="rate(4)">★</span>
-                <span onclick="rate(5)">★</span>
+        
+        {# Bouton Annuler uniquement pour le statut Enregistrée #}
+        {% if statut == 'Enregistrée' %}
+            <button id="cancelButton" class="cancel-button" onclick="cancelOrder()">Annuler la commande</button>
+        {% endif %}
+
+        {# Section avis uniquement pour certains statuts #}
+        {% if statut in ['En cours de préparation', 'Prête', 'Terminée'] %}
+            <div id="feedbackSection" class="feedback-section">
+                <h3>Votre avis compte !</h3>
+                <div class="star-rating">
+                    <span onclick="rate(1)">★</span>
+                    <span onclick="rate(2)">★</span>
+                    <span onclick="rate(3)">★</span>
+                    <span onclick="rate(4)">★</span>
+                    <span onclick="rate(5)">★</span>
+                </div>
+                <textarea id="comment" placeholder="Laissez un commentaire (optionnel)">{{ produit.commentaireAvis ?? '' }}</textarea>
+                <button onclick="submitFeedback()">Envoyer</button>
             </div>
-            <textarea id="comment" placeholder="Laissez un commentaire (optionnel)">{{ produit.commentaireAvis ?? '' }}</textarea>
-            <button onclick="submitFeedback()">Envoyer</button>
-        </div>
+        {% endif %}
+
         <button id="darkModeToggle" onclick="toggleDarkMode()">Mode Cinéma 🎥</button>
     </div>
-      {% include 'commande/script.html' %}
+    {% include 'commande/script.html' %}
     <script>
-    // Bloquer la navigation par swipe sur iOS/Android
-    document.addEventListener('touchstart', function(e) {
-        this.startX = e.touches[0].clientX;
-        this.startY = e.touches[0].clientY;
-    }, { passive: false });
-
-    document.addEventListener('touchmove', function(e) {
-        if (Math.abs(e.touches[0].clientX - this.startX) > 
-            Math.abs(e.touches[0].clientY - this.startY)) {
-            e.preventDefault();
+        // Script existant...
+        
+        // Fonction pour annuler la commande (à implémenter)
+        function cancelOrder() {
+            if(confirm("Êtes-vous sûr de vouloir annuler la commande ?")) {
+                // Ajouter ici la logique d'annulation
+                fetch("{{ path('commande_annuler', {'id': commande.id}) }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            location.reload();
+                        }
+                    });
+            }
         }
-    }, { passive: false });
-
-    // Bloquer l'overscroll horizontal
-    document.body.style.overscrollBehaviorX = 'none';
     </script>
-
-    <style>
-
-    </style>
 </body>
-
 </html>
