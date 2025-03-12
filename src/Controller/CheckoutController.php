@@ -44,10 +44,10 @@ class CheckoutController extends AbstractController
                 return new JsonResponse(['success' => false, 'error' => 'Le panier est vide'], 400);
             }
             
-            // Séparer les items du panier
-            $menuMainItems = [];      // produits avec est_menu = 1 (plat principal)
-            $menuBoissonItems = [];   // produits avec est_menu_boisson = 1 (boisson)
-            $normalItems = [];        // le reste des produits
+            // Séparation des items du panier
+            $menuMainItems = [];      // Produits avec est_menu = 1 (plat principal)
+            $menuBoissonItems = [];   // Produits avec est_menu_boisson = 1 (boisson)
+            $normalItems = [];        // Le reste des produits
 
             foreach ($cartItems as $item) {
                 $produitId = $item['produitId'];
@@ -70,18 +70,17 @@ class CheckoutController extends AbstractController
             $orderLineNumber = 1;
             $reductionValue = null;
             
-            // Traitement des menus composés (on associe le premier plat avec la première boisson, etc.)
+            // Traitement des menus composés (association du premier plat avec la première boisson, etc.)
             $pairedMenus = min(count($menuMainItems), count($menuBoissonItems));
             for ($i = 0; $i < $pairedMenus; $i++) {
                 $mainItem = $menuMainItems[$i];
                 $boissonItem = $menuBoissonItems[$i];
                 
-                // Récupération du prix du plat principal :
-                // On récupère la taille à utiliser depuis la table "avoir" (pour simplifier, on prend le premier record)
+                // Récupération du prix du plat principal (on prend le premier record dans "avoir")
                 $tailleIdMain = $connection->fetchOne('SELECT taille_id FROM avoir WHERE produit_id = ? LIMIT 1', [$mainItem['produitId']]);
                 $prixMain = $connection->fetchOne('SELECT prix FROM avoir WHERE produit_id = ? AND taille_id = ?', [$mainItem['produitId'], $tailleIdMain]);
                 
-                // Récupération du prix de la boisson en fonction de la taille passée dans le raw (ex: "50cl")
+                // Récupération du prix de la boisson en fonction de la taille passée (ex: "50cl")
                 $tailleIdBoisson = $connection->fetchOne('SELECT id FROM taille WHERE unite = ?', [$boissonItem['taille']]);
                 if (!$tailleIdBoisson) {
                     return new JsonResponse(['success' => false, 'error' => "Taille invalide pour le produit ID " . $boissonItem['produitId']], 400);
@@ -92,27 +91,25 @@ class CheckoutController extends AbstractController
                     return new JsonResponse(['success' => false, 'error' => "Prix introuvable pour les produits constituant le menu"], 400);
                 }
                 
-                // On suppose que la quantité du plat et de la boisson est identique
+                // La quantité est supposée identique pour le plat et la boisson
                 $quantity = $mainItem['quantity'];
                 
                 $menuPriceWithoutReduction = ($prixMain + $prixBoisson) * $quantity;
                 $totalPriceWithoutReduction += $menuPriceWithoutReduction;
                 
                 // Récupération de la réduction depuis le produit boisson
-                // Lors du traitement des menus composés
                 $reduction = $connection->fetchOne('SELECT valeur FROM produit WHERE id = ? AND est_menu_boisson = 1', [$boissonItem['produitId']]);
 
                 if ($reduction !== false && $reduction !== null) {
-                    // Appliquer la réduction une seule fois ici
+                    // Appliquer la réduction une seule fois
                     $menuPriceWithReduction = ($prixMain + $prixBoisson - $reduction) * $quantity;
                     $totalPriceWithReduction += $menuPriceWithReduction;
                 } else {
                     $menuPriceWithReduction = $menuPriceWithoutReduction;
                     $totalPriceWithReduction += $menuPriceWithoutReduction;
                 }
-                $totalPriceWithReduction += $menuPriceWithReduction;
                 
-                // Ajout de la ligne de commande pour ce menu composé
+                // Ajout des lignes de commande pour le menu composé
                 // Ligne pour le plat principal
                 $orderLines[] = [
                     'produit_id'   => $mainItem['produitId'],
@@ -128,11 +125,10 @@ class CheckoutController extends AbstractController
                     'produit_id'   => $boissonItem['produitId'],
                     'taille_id'    => $tailleIdBoisson,
                     'quantite'     => $quantity,
-                    'prix'         => $prixBoisson - ($reduction ?? 0), // Applique la réduction
+                    'prix'         => $prixBoisson - ($reduction ?? 0),
                     'numero_ordre' => $orderLineNumber++,
                     'type'         => 'menu'
                 ];
-
             }
             
             // Traitement des produits restants (non associés en menu)
@@ -141,7 +137,6 @@ class CheckoutController extends AbstractController
                 array_slice($menuBoissonItems, $pairedMenus)
             );
             foreach ($restItems as $item) {
-                // Récupérer la taille à partir de la table "taille" par le nom fourni (ex: "Petit", "50cl", etc.)
                 $tailleId = $connection->fetchOne('SELECT id FROM taille WHERE unite = ?', [$item['taille']]);
                 if (!$tailleId) {
                     return new JsonResponse(['success' => false, 'error' => "Taille invalide pour le produit ID {$item['produitId']}"], 400);
@@ -177,6 +172,10 @@ class CheckoutController extends AbstractController
                 'prix_total'      => $totalPriceWithReduction,
             ]);
             $commandeId = $connection->lastInsertId();
+
+            // Stocker l'ID de la commande dans la session pour la redirection vers /commande
+            $request->getSession()->set('commande_id', $commandeId);
+
             $orderNumber = str_pad($commandeId, 3, '0', STR_PAD_LEFT);
             $connection->update('commande', [
                 'numero_commande' => $orderNumber,
