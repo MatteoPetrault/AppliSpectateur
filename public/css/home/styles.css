@@ -368,7 +368,9 @@
    
    .card:hover {
      transform: translateY(-5px);
-     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+     box-shadow: 0 4px 15px rgb(85, 85, 85);
+     /*border-color: blue;
+     border-width: 3px;*/
    }
    
    #menuStep2 h4 {
