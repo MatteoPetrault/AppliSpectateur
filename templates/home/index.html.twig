@@ -250,48 +250,6 @@
         </div>
       </div>
     </div>
-
-    {# Modal de confirmation pour les menus #}
-    <div class="modal fade" id="confirmAddMenuModal" tabindex="-1" aria-labelledby="confirmAddMenuModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="confirmAddMenuModalLabel">Confirmation</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-          </div>
-          <div class="modal-body">
-            Êtes-vous sûr de vouloir ajouter ce menu au panier ?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-            <button type="button" class="btn btn-primary" id="confirmAddMenuButton">Confirmer</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    {# Modal de succès stylé #}
-    <div class="modal fade" id="savingsModal" tabindex="-1" aria-labelledby="savingsModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg border-0 rounded-4">
-          <div class="modal-header bg-gradient text-white border-0 rounded-top-4" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);">
-            <h5 class="modal-title fw-bold" id="savingsModalLabel">Félicitations !</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
-          </div>
-          <div class="modal-body text-center py-4">
-            <i class="bi bi-check-circle-fill text-success fs-1"></i>
-            <p id="savingsMessage" class="mt-3 fs-5 text-muted">Votre économie a bien été enregistrée.</p>
-          </div>
-          <div class="modal-footer border-0 justify-content-center">
-            <button type="button" class="btn btn-lg px-4 py-2 text-white rounded-pill" data-bs-dismiss="modal" 
-                    style="background: linear-gradient(135deg, #ff416c, #ff4b2b); border: none; transition: 0.3s;">
-              <strong>OK</strong>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     {# Modal du panier avec le formulaire de validation de commande #}
     <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-fullscreen-sm-down">

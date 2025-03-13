@@ -109,6 +109,7 @@
           sessionStorage.setItem('panier', JSON.stringify(data.panier));
           updateCartDisplay();
           bootstrap.Modal.getInstance(document.getElementById('menuComposerModal')).hide();
+          animateAddToCart();
         }
       });
     }
@@ -129,9 +130,9 @@
               data-price="${item.total}">
             <div class="d-flex justify-content-between">
               <div>
-                <h6>Menu personnalisé</h6>
+                <h6>Menu</h6>
                 <small>${item.snack.nom} (${item.snack.taille}) + ${item.drink.nom} (${item.drink.taille})</small>
-                <div class="text-success">Économie : ${item.valeur}€</div>
+                <div class="text-success">Remise : ${item.valeur}€</div>
               </div>
               <div class="quantity-container">
                 <button class="btn btn-sm btn-secondary" onclick="modifierQuantiteMenu('${menuId}', -1)">-</button>
