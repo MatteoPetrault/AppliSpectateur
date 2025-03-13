@@ -70,14 +70,25 @@
 
     <main class="container mt-3">
       {# Carte pour composer le menu avec un bouton stylé #}
-      <div class="category-card card mb-3">
-        <div class="card-header d-flex justify-content-between align-items-center pe-3" id="headingMenu">
+      <div class="menu-card card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center pe-3"
+            id="headingMenu"
+            role="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapseMenu"
+            aria-expanded="false"
+            aria-controls="collapseMenu">
           <h2 class="mb-0">Composer mon menu</h2>
         </div>
-        <div class="card-body text-center">
-          <button class="btn btn-primary btn-lg" onclick="openMenuComposer()">Composer votre menu</button>
+        <div id="collapseMenu"
+            class="collapse"
+            aria-labelledby="headingMenu">
+          <div class="card-body text-center">
+            <button class="btn btn-danger btn-lg" onclick="openMenuComposer()">Composer votre menu</button>
+          </div>
         </div>
       </div>
+
 
       {# Boucle sur les catégories de produits #}
       {% for category in categories %}
@@ -189,7 +200,7 @@
       {% endfor %}  
     </main>
 
-    {# Modal pour la composition du menu #}
+    <!-- Modal de composition du menu -->
     <div class="modal fade" id="menuComposerModal" tabindex="-1" aria-labelledby="menuComposerModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -198,17 +209,98 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
           </div>
           <div class="modal-body">
-            <!-- Étape 1 : Choix du snack -->
             <div id="menuStep1" class="menu-step">
-              <h4>Étape 1 : Choisissez votre snack</h4>
-              <div class="row" id="snackOptions"></div>
+              <h4>Étape 1 : Choisissez votre confiserie</h4>
+              {# Groupement des snacks par nom #}
+              {% set groupedSnacks = {} %}
+              {% for snack in snackItems %}
+                {% set key = snack.nom %}
+                {% if groupedSnacks[key] is not defined %}
+                  {% set groupedSnacks = groupedSnacks|merge({ (key): [snack] }) %}
+                {% else %}
+                  {% set groupedSnacks = groupedSnacks|merge({ (key): groupedSnacks[key]|merge([snack]) }) %}
+                {% endif %}
+              {% endfor %}
+
+              {# Parcours de chaque groupe #}
+              {% for groupName, items in groupedSnacks %}
+                <div class="group-separator">
+                </div>
+                <br>
+                {% set nbItems = items|length %}
+                {% for i in 0..(nbItems - 1) %}
+                  {% if i is divisible by(2) %}
+                    <div class="row">
+                  {% endif %}
+                  {% if (i == nbItems - 1) and (nbItems is odd) %}
+                    {# Pour un seul item dans la rangée, on centre avec offset #}
+                    <div class="col-6 offset-3 mb-3">
+                      <div class="card h-100" onclick="selectMenuItem({{ items[i].avoirId }}, 'snack', event)">
+                        <img src="{{ items[i].imageUrl }}" class="card-img-top" alt="{{ items[i].nom }}" style="height: 150px; object-fit: cover;">
+                        <div class="card-body">
+                          <h5 class="card-title">{{ items[i].nom }}</h5>
+                          <p class="card-text">{{ items[i].taille }} - {{ items[i].prix }}€</p>
+                        </div>
+                      </div>
+                    </div>
+                  {% else %}
+                    <div class="col-6 mb-3">
+                      <div class="card h-100" onclick="selectMenuItem({{ items[i].avoirId }}, 'snack', event)">
+                        <img src="{{ items[i].imageUrl }}" class="card-img-top" alt="{{ items[i].nom }}" style="height: 150px; object-fit: cover;">
+                        <div class="card-body">
+                          <h5 class="card-title">{{ items[i].nom }}</h5>
+                          <p class="card-text">{{ items[i].taille }} - {{ items[i].prix }}€</p>
+                        </div>
+                      </div>
+                    </div>
+                  {% endif %}
+                  {% if (i+1) is divisible by(2) or i == nbItems-1 %}
+                    </div>
+                  {% endif %}
+                {% endfor %}
+                <hr>
+              {% endfor %}
             </div>
-            <!-- Étape 2 : Choix de la boisson -->
             <div id="menuStep2" class="menu-step d-none">
-              <h4>Étape 2 : Choisissez votre boisson</h4>
-              <div class="row" id="drinkOptions"></div>
+              <h4 class="text-center text-danger fw-bold mb-4">Étape 2 : Choisissez votre boisson pour seulement 2€</h4>
+              {% set nbDrinks = drinkItems|length %}
+              {% for i in 0..(nbDrinks - 1) %}
+                {% if i is divisible by(2) %}
+                  <div class="row">
+                {% endif %}
+                {% if (i == nbDrinks - 1) and (nbDrinks is odd) %}
+                  <div class="col-6 offset-3 mb-3">
+                    <div class="card h-100" onclick="selectMenuDrink({{ drinkItems[i].avoirId }}, event)">
+                      <img src="{{ drinkItems[i].imageUrl }}" class="card-img-top" alt="{{ drinkItems[i].nom }}" style="height: 150px; object-fit: cover;">
+                      <div class="card-body">
+                        <h5 class="card-title">{{ drinkItems[i].nom }}</h5>
+                        <p class="card-text">{{ drinkItems[i].taille }} - {{ drinkItems[i].prix }}€</p>
+                      </div>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="col-6 mb-3">
+                    <div class="card h-100" onclick="selectMenuDrink({{ drinkItems[i].avoirId }}, event)">
+                      <img src="{{ drinkItems[i].imageUrl }}" class="card-img-top" alt="{{ drinkItems[i].nom }}" style="height: 150px; object-fit: cover;">
+                      <div class="card-body">
+                        <h5 class="card-title">{{ drinkItems[i].nom }}</h5>
+                        <p class="card-text">{{ drinkItems[i].taille }} - {{ drinkItems[i].prix }}€</p>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                {% if (i+1) is divisible by(2) or i == nbDrinks-1 %}
+                  </div>
+                {% endif %}
+              {% endfor %}
             </div>
-            <!-- Récapitulatif du menu -->
+
+
+          </div>
+
+
+            
+            {# Récapitulatif du menu (inchangé) #}
             <div id="menuSummary" class="d-none">
               <hr>
               <h4>Récapitulatif du menu</h4>
@@ -223,6 +315,7 @@
               </div>
             </div>
           </div>
+          
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
             <button type="button" class="btn btn-secondary d-none" id="previousStepButton" onclick="previousStep()">Retour</button>
@@ -231,6 +324,7 @@
         </div>
       </div>
     </div>
+
 
     {# Modal de confirmation pour l'ajout au panier #}
     <div class="modal fade" id="confirmAddModal" tabindex="-1" aria-labelledby="confirmAddModalLabel" aria-hidden="true">

@@ -51,10 +51,40 @@ class HomeController extends AbstractController
             }
         }
         
+        // Récupération des items pour la composition du menu
+
+        // Snack : produits éligibles aux menus (confiseries)
+        $snackItems = $this->entityManager->createQueryBuilder()
+            ->select('a.id as avoirId', 'p.nom', 'p.ref_produit as imageUrl', 't.unite as taille', 'a.prix as prix')
+            ->from(Produit::class, 'p')
+            ->join(Avoir::class, 'a', 'WITH', 'a.produit = p.id')
+            ->join('a.taille', 't')
+            ->where('p.en_ligne = 1')
+            ->andWhere('p.est_menu = 1')
+            ->orderBy('p.nom', 'ASC')
+            ->groupBy('p.nom, t.unite')
+            ->getQuery()
+            ->getArrayResult();
+        
+        // Boisson : produits éligibles aux menus avec un prix fixé à 2€
+        $drinkItems = $this->entityManager->createQueryBuilder()
+            ->select('a.id as avoirId', 'p.nom', 'p.ref_produit as imageUrl', 't.unite as taille', "2 as prix")
+            ->from(Produit::class, 'p')
+            ->join(Avoir::class, 'a', 'WITH', 'a.produit = p.id')
+            ->join('a.taille', 't')
+            ->where('p.en_ligne = 1')
+            ->andWhere('p.est_menu_boisson = 1')
+            ->orderBy('p.nom', 'ASC')
+            ->groupBy('p.nom, t.unite')
+            ->getQuery()
+            ->getArrayResult();
+        
         return $this->render('home/index.html.twig', [
-            'groupedProducts' => $groupedProducts,
-            'categories' => $categories,
-            'subcategoriesByCategory' => $subcategoriesByCategory
+            'groupedProducts'      => $groupedProducts,
+            'categories'           => $categories,
+            'subcategoriesByCategory' => $subcategoriesByCategory,
+            'snackItems'           => $snackItems,
+            'drinkItems'           => $drinkItems
         ]);
     }
     
@@ -64,23 +94,27 @@ class HomeController extends AbstractController
         $type = $request->query->get('type');
         
         $query = $this->entityManager->createQueryBuilder()
-            ->select('a.id as avoirId', 'p.nom', 'p.valeur', 'a.prix', 't.unite as taille')
+            ->select('a.id as avoirId', 'p.nom', 'p.ref_produit as imageUrl', 't.unite as taille')
+            ->addSelect('CASE WHEN :type = \'drink\' THEN 2 ELSE a.prix END as prix')
             ->from(Produit::class, 'p')
             ->join(Avoir::class, 'a', 'WITH', 'a.produit = p.id')
             ->join('a.taille', 't')
-            ->where('p.en_ligne = 1');
-    
+            ->where('p.en_ligne = 1')
+            ->orderBy('p.nom', 'ASC')
+            ->groupBy('p.nom, t.unite') // Groupement par nom et taille
+            ->setParameter('type', $type);
+
         if ($type === 'snack') {
             $query->andWhere('p.est_menu = 1');
         } elseif ($type === 'drink') {
             $query->andWhere('p.est_menu_boisson = 1');
         }
-    
+
         $items = $query->getQuery()->getArrayResult();
-    
+
         return new JsonResponse($items);
     }
-    
+        
     #[Route('/panier/ajouter-menu', name: 'ajouter_menu', methods: ['POST'])]
     public function ajouterMenu(Request $request): JsonResponse
     {

@@ -1,298 +1,382 @@
-:root {
-    --rouge-cinema: #c41e3a;
-    --noir-cinema: #0a0a0a;
-    --blanc: #ffffff;
-    --or: #ffd700;
-}
+/* ===============================
+   Global Variables & Imports
+   =============================== */
+   @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
 
-/* Styles généraux */
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f4;
-}
-
-header {
-    background-color: #333;
-    padding: 10px 0;
-    text-align: center;
-}
-
-.title_fauteuil {
-    margin: auto;
-    color: var(--blanc);
-}
-
-.title_fauteuil .cinema-rouge {
-    color: var(--rouge-cinema);
-}
-
-/* Ajustement optionnel du logo panier dans la nav */
-.nav-link img {
-    margin-left: 225% !important;
-}
-
-/* ------------------------------------------------------------------
-   LISTE DES PRODUITS (catalogue)
-   ------------------------------------------------------------------ */
-/* On ne fait plus de display: grid; 
-   On compte sur Bootstrap .row, .col, etc. dans le HTML */
-.produits-liste {
-    width: 100%;
-    margin: 0 auto;
-}
-
-/* Carte d’un produit */
-.produit-cadre {
-    background-color: var(--blanc);
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 12px;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box;
-    max-width: 100%;
-    overflow: hidden;
-}
-
-.produit-image {
-    display: block;
-    margin: 0 auto;
-    max-width: 100%;
-    height: 150px;
-    object-fit: cover;
-    border-radius: 10px;
-}
-
-.produit-nom {
-    font-size: 1em;
-    margin: 8px 0;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.produit-prix {
-    font-size: 0.9em;
-    color: #333;
-    font-weight: bold;
-    margin: 8px 0;
-}
-
-.produit-bouton {
-    margin-top: 10px;
-    padding: 10px 15px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9em;
-    width: 95%;
-}
-
-.quantity-wrapper .input-group {
-    max-width: 150px;
-    margin: 0 auto;
-}
-
-/* ------------------------------------------------------------------
-   MENUS (catégorie id=7)
-   ------------------------------------------------------------------ */
-.menu-cadre {
-    background: #fff;
-    border: 2px solid var(--rouge-cinema);
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 20px;
-}
-
-.menu-options .form-select {
-    margin-bottom: 15px;
-    border-color: var(--rouge-cinema);
-}
-
-/* ------------------------------------------------------------------
-   PANIER FLOTTANT
-   ------------------------------------------------------------------ */
-.floating-cart {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 50%;
-    padding: 10px;
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    z-index: 9999;
-    transition: transform 0.2s ease-in-out;
-}
-
-.cart-count {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: red;
-    color: #fff;
-    border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 12px;
-}
-
-/* ------------------------------------------------------------------
-   ACCORDÉONS
-   ------------------------------------------------------------------ */
-.category-card .card-header {
-    cursor: pointer;
-    transition: background-color 0.2s;
-    padding: 1rem;
-    background-color: rgba(0, 0, 0, 0.03);
-    border-color: var(--rouge-cinema);
-}
-
-.subcategory-header {
-    cursor: pointer;
-    padding: 0.75rem 1rem;
-    background-color: rgba(0, 0, 0, .03);
-    border-radius: 0.25rem;
-    transition: background-color 0.2s;
-}
-
-.subcategory-header i {
-    transition: transform 0.3s ease;
-}
-
-/* ------------------------------------------------------------------
-   TABLEAU DU PANIER (modal)
-   ------------------------------------------------------------------ */
-#cartItemsContainer {
-    margin-top: 1rem;
-}
-
-#emptyCartMsg {
-    /* message "panier vide" */
-    margin-bottom: 1rem;
-}
-
-/* On stylise le tableau avec Bootstrap .table */
-#cartTable {
-    width: 100%;
-    display: none;
-    /* On l’affiche en JS si le panier n’est pas vide */
-}
-
-#cartTable th,
-#cartTable td {
-    vertical-align: middle;
-    border-bottom: 1px solid #dee2e6;
-    padding: 0.75rem;
-}
-
-#cartTable th {
-    background-color: #f8f9fa;
-    text-align: left;
-}
-
-#cartTable td .input-group {
-    max-width: 120px;
-}
-
-/* Style pour les modaux de confirmation */
-.modal-content {
-    border: 2px solid var(--rouge-cinema);
-}
-
-.modal-header {
-    background-color: #dc3545;
-    color: white;
-}
-
-#confirmAddMenuButton {
-    background-color: var(--rouge-cinema);
-    border-color: var(--rouge-cinema);
-}
-
-#confirmAddMenuButton:hover {
-    background-color: #a71a2f;
-    border-color: #a71a2f;
-}
-/* Style du badge de réduction incliné */
-.reduction-badge {
-    background-color: var(--rouge-cinema);
-    color: white;
-    padding: 0.2rem 0.1rem;
-    font-size: 1.1em;
-    font-weight: bold;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    position: relative;
-    /* Inclinaison du badge */
-    transform: rotate(-15deg); /* Ajustez l'angle selon vos préférences */
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    display: inline-block; /* Assure que la rotation s'applique correctement */
-    border-radius: 5px; /* Ajoute un léger arrondi aux coins */
-}
-
-/* Effet de halo pour un look dynamique */
-.reduction-badge::before {
-    content: "";
-    position: absolute;
-    top: -5%;
-    left: -5%;
-    width: 110%;
-    height: 110%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-    z-index: -1;
-    transform: rotate(15deg); /* Ajustez l'angle pour correspondre à la rotation du badge */
-    border-radius: 50%;
-}
-
-/* Animation optionnelle pour un effet visuel */
-@keyframes pulse {
-    0% {
-        transform: rotate(-15deg) scale(1);
-    }
-    50% {
-        transform: rotate(-15deg) scale(1.1);
-    }
-    100% {
-        transform: rotate(-15deg) scale(1);
-    }
-}
-
-.reduction-badge:hover {
-    animation: pulse 1s infinite; /* Ajoute une animation au survol */
-}
-
-@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
-
-.welcome-message {
-    font-family: 'Pacifico', cursive;
-    font-size: 2rem;
-    color: #ff0000; /* Une belle couleur orange */
-    text-align: center;
-    margin-top: 20px;
-    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-    animation: fadeIn 1.5s ease-in-out;
-}
-
-/* Animation pour un effet d'apparition fluide */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-.card.selected {
-    background-color: #d3d3d3; /* Couleur de fond grisée */
-    opacity: 0.7;
-    transition: background-color 0.3s, opacity 0.3s;
-  }
-  
+   :root {
+     --rouge-cinema: #c41e3a;
+     --noir-cinema: #0a0a0a;
+     --blanc: #ffffff;
+     --or: #ffd700;
+   }
+   
+   /* ===============================
+      Global Styles
+      =============================== */
+   body {
+     font-family: Arial, sans-serif;
+     margin: 0;
+     padding: 0;
+     background-color: #f4f4f4;
+   }
+   
+   header {
+     background-color: #333;
+     padding: 10px 0;
+     text-align: center;
+   }
+   
+   .title_fauteuil {
+     margin: auto;
+     color: var(--blanc);
+   }
+   
+   .title_fauteuil .cinema-rouge {
+     color: var(--rouge-cinema);
+   }
+   
+   .nav-link img {
+     margin-left: 225% !important;
+   }
+   
+   /* ===============================
+      Layout pour Menus & Produits
+      =============================== */
+   
+   /* Styles communs pour les menus et la liste des produits */
+   #menuStep1 .row,
+   #menuStep2 .row,
+   .produits-liste {
+     display: flex;
+     flex-wrap: wrap;
+     gap: 1rem;
+     justify-content: flex-start;
+   }
+   
+   /* On cible tous les éléments ayant une classe type "col-" et les cartes produit */
+   #menuStep1 .row > [class*="col-"],
+   #menuStep2 .row > [class*="col-"],
+   .produit-cadre {
+     flex: 0 0 calc(50% - 0.5rem);
+     max-width: calc(50% - 0.5rem);
+   }
+   
+   /* Centrage automatique du dernier item s'il est seul dans la rangée */
+   #menuStep1 .row > [class*="col-"]:last-child:nth-child(odd),
+   #menuStep2 .row > [class*="col-"]:last-child:nth-child(odd),
+   .produits-liste > .produit-cadre:last-child:nth-child(odd) {
+     margin-left: auto;
+     margin-right: auto;
+   }
+   
+   /* Responsive : on conserve le format 2 colonnes même sur mobile */
+   @media (max-width: 767px) {
+     #menuStep1 .row > [class*="col-"],
+     #menuStep2 .row > [class*="col-"],
+     .produit-cadre {
+       flex: 0 0 calc(50% - 0.5rem);
+       max-width: calc(50% - 0.5rem);
+     }
+     #menuStep1 .row > [class*="col-"]:last-child:nth-child(odd),
+     #menuStep2 .row > [class*="col-"]:last-child:nth-child(odd),
+     .produits-liste > .produit-cadre:last-child:nth-child(odd) {
+       margin-left: auto;
+       margin-right: auto;
+     }
+   }
+   
+   /* ===============================
+      Cartes Produits & Options de Menu
+      =============================== */
+   
+   /* Carte de produit */
+   .produit-cadre {
+     background-color: var(--blanc);
+     border: 1px solid #ddd;
+     border-radius: 8px;
+     padding: 12px;
+     text-align: center;
+     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+     box-sizing: border-box;
+     overflow: hidden;
+   }
+   
+   /* Conteneur de la liste de produits */
+   .produits-liste {
+     width: 100%;
+     margin: 0 auto;
+   }
+   
+   /* Image produit */
+   .produit-image {
+     display: block;
+     margin: 0 auto;
+     max-width: 100%;
+     height: 150px;
+     object-fit: cover;
+     border-radius: 10px;
+   }
+   
+   /* Nom du produit avec ellipsis */
+   .produit-nom {
+     font-size: 1em;
+     margin: 8px 0;
+     line-height: 1.2;
+     white-space: nowrap;
+     overflow: hidden;
+     text-overflow: ellipsis;
+   }
+   
+   /* Prix du produit */
+   .produit-prix {
+     font-size: 0.9em;
+     color: #333;
+     font-weight: bold;
+     margin: 8px 0;
+   }
+   
+   /* Bouton "Ajouter au panier" */
+   .produit-bouton {
+     margin-top: 10px;
+     padding: 10px 15px;
+     background-color: #007bff;
+     color: white;
+     border: none;
+     border-radius: 5px;
+     cursor: pointer;
+     font-size: 0.9em;
+     width: 95%;
+   }
+   
+   /* Groupe quantité */
+   .quantity-wrapper .input-group {
+     max-width: 150px;
+     margin: 0 auto;
+   }
+   
+   /* ===============================
+      Menus (Catégorie id=7)
+      =============================== */
+   .menu-cadre {
+     background: #fff;
+     border: 2px solid var(--rouge-cinema);
+     border-radius: 10px;
+     padding: 15px;
+     margin-bottom: 20px;
+   }
+   
+   .menu-options .form-select {
+     margin-bottom: 15px;
+     border-color: var(--rouge-cinema);
+   }
+   
+   /* ===============================
+      Panier Flottant
+      =============================== */
+   .floating-cart {
+     position: fixed;
+     bottom: 20px;
+     right: 20px;
+     background-color: #fff;
+     border: 1px solid #ccc;
+     border-radius: 50%;
+     padding: 10px;
+     cursor: pointer;
+     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+     z-index: 9999;
+     transition: transform 0.2s ease-in-out;
+   }
+   
+   .cart-count {
+     position: absolute;
+     top: -5px;
+     right: -5px;
+     background: red;
+     color: #fff;
+     border-radius: 50%;
+     padding: 2px 6px;
+     font-size: 12px;
+   }
+   
+   /* ===============================
+      Accordéons
+      =============================== */
+   .category-card .card-header {
+     cursor: pointer;
+     transition: background-color 0.2s;
+     padding: 1rem;
+     background-color: rgba(0, 0, 0, 0.03);
+     border-color: var(--rouge-cinema);
+   }
+   
+   .subcategory-header {
+     cursor: pointer;
+     padding: 0.75rem 1rem;
+     background-color: rgba(0, 0, 0, 0.03);
+     border-radius: 0.25rem;
+     transition: background-color 0.2s;
+   }
+   
+   .subcategory-header i {
+     transition: transform 0.3s ease;
+   }
+   
+   /* ===============================
+      Tableau du Panier (Modal)
+      =============================== */
+   #cartItemsContainer {
+     margin-top: 1rem;
+   }
+   
+   #emptyCartMsg {
+     margin-bottom: 1rem;
+   }
+   
+   #cartTable {
+     width: 100%;
+     display: none;
+   }
+   
+   #cartTable th,
+   #cartTable td {
+     vertical-align: middle;
+     border-bottom: 1px solid #dee2e6;
+     padding: 0.75rem;
+   }
+   
+   #cartTable th {
+     background-color: #f8f9fa;
+     text-align: left;
+   }
+   
+   #cartTable td .input-group {
+     max-width: 120px;
+   }
+   
+   /* ===============================
+      Modaux de Confirmation
+      =============================== */
+   .modal-content {
+     border: 2px solid var(--rouge-cinema);
+   }
+   
+   .modal-header {
+     background-color: #dc3545;
+     color: white;
+   }
+   
+   #confirmAddMenuButton {
+     background-color: var(--rouge-cinema);
+     border-color: var(--rouge-cinema);
+   }
+   
+   #confirmAddMenuButton:hover {
+     background-color: #a71a2f;
+     border-color: #a71a2f;
+   }
+   
+   /* ===============================
+      Badge de Réduction Incliné
+      =============================== */
+   .reduction-badge {
+     background-color: var(--rouge-cinema);
+     color: white;
+     padding: 0.2rem 0.1rem;
+     font-size: 1.1em;
+     font-weight: bold;
+     text-align: center;
+     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+     position: relative;
+     transform: rotate(-15deg);
+     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+     display: inline-block;
+     border-radius: 5px;
+   }
+   
+   .reduction-badge::before {
+     content: "";
+     position: absolute;
+     top: -5%;
+     left: -5%;
+     width: 110%;
+     height: 110%;
+     background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+     z-index: -1;
+     transform: rotate(15deg);
+     border-radius: 50%;
+   }
+   
+   @keyframes pulse {
+     0% {
+       transform: rotate(-15deg) scale(1);
+     }
+     50% {
+       transform: rotate(-15deg) scale(1.1);
+     }
+     100% {
+       transform: rotate(-15deg) scale(1);
+     }
+   }
+   
+   .reduction-badge:hover {
+     animation: pulse 1s infinite;
+   }
+   
+   /* ===============================
+      Animations & Divers
+      =============================== */
+   .welcome-message {
+     font-family: 'Pacifico', cursive;
+     font-size: 2rem;
+     color: #ff0000;
+     text-align: center;
+     margin-top: 20px;
+     text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+     animation: fadeIn 1.5s ease-in-out;
+   }
+   
+   @keyframes fadeIn {
+     from {
+       opacity: 0;
+       transform: translateY(-10px);
+     }
+     to {
+       opacity: 1;
+       transform: translateY(0);
+     }
+   }
+   
+   .card.selected {
+     background-color: #d3d3d3;
+     opacity: 0.7;
+     transition: background-color 0.3s, opacity 0.3s;
+   }
+   
+   .product-group-separator {
+     border-top: 2px solid var(--rouge-cinema);
+     margin: 1rem 0;
+   }
+   
+   .card-img-top {
+     border-radius: 8px 8px 0 0;
+   }
+   
+   .card {
+     transition: transform 0.2s;
+     cursor: pointer;
+   }
+   
+   .card:hover {
+     transform: translateY(-5px);
+     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+   }
+   
+   #menuStep2 h4 {
+     font-size: 1.5rem;
+     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+     padding: 10px;
+     background: linear-gradient(45deg, #c41e3a, #ff6b6b);
+     -webkit-background-clip: text;
+     -webkit-text-fill-color: transparent;
+   }
+   

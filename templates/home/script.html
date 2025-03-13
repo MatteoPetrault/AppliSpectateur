@@ -47,32 +47,49 @@
       const response = await fetch(`/api/menu-items?type=${type}`);
       const items = await response.json();
       const container = type === 'snack' ? document.getElementById('snackOptions') : document.getElementById('drinkOptions');
-      container.innerHTML = items.map(item => `
-      <div class="col-md-4 mb-3">
-        <div class="card h-100" onclick="selectMenuItem(${item.avoirId}, '${type}', event)">
-          <div class="card-body">
-            <h5 class="card-title">${item.nom}</h5>
-            <p class="card-text">${item.taille} - ${item.prix}€</p>
-          </div>
-        </div>
-      </div>
-    `).join('');
+      // Dans la fonction fetchMenuItems
+      // Remplacer la génération des colonnes par :
+      container.innerHTML = items.map((item, index) => {
+          const isNewGroup = index === 0 || items[index - 1].nom !== item.nom;
+          return `
+              ${isNewGroup ? '<div class="w-100 mb-3 border-top"></div>' : ''}
+              <div class="col">
+                  <div class="card h-100" onclick="selectMenuItem(${item.avoirId}, '${type}', event)">
+                      <img src="${item.imageUrl}" class="card-img-top" alt="${item.nom}">
+                      <div class="card-body">
+                          <h5 class="card-title">${item.nom}</h5>
+                          ${type === 'snack' ? `<p class="card-text">${item.taille} - ${item.prix}€</p>` : ''}
+                      </div>
+                  </div>
+              </div>
+          `;
+      }).join('');
     }
 
     // Sélection d'un item dans le menu
+    // Pour l'étape 1 : selection du snack
     function selectMenuItem(avoirId, type, event) {
-      document.querySelectorAll(`#${type}Options .card`).forEach(item => item.classList.remove('selected'));
+      // Retire la classe 'selected' de tous les cards du container concerné
+      document.querySelectorAll(`#menuStep1 .card`).forEach(item => item.classList.remove('selected'));
       const selectedCard = event.target.closest('.card');
       selectedCard.classList.add('selected');
-
-      if (type === 'snack') {
-        currentMenu.snack = avoirId;
-        nextStep();
-      } else if (type === 'drink') {
-        currentMenu.drink = avoirId;
-        document.getElementById('confirmMenuButton').classList.remove('d-none');
-      }
+      currentMenu.snack = avoirId;
+      nextStep(); // Passe à l'étape 2
     }
+
+    // Pour l'étape 2 : selection de la boisson qui valide directement
+    function selectMenuDrink(avoirId, event) {
+      // Supprime la classe 'selected' de toutes les cartes de boisson
+      document.querySelectorAll('#menuStep2 .card').forEach(item => item.classList.remove('selected'));
+      const selectedCard = event.target.closest('.card');
+      selectedCard.classList.add('selected');
+      currentMenu.drink = avoirId;
+      // Valider directement la sélection et ajouter le menu au panier
+      addMenuToCart();
+    }
+
+
+
 
     function nextStep() {
       document.getElementById('menuStep1').classList.add('d-none');
