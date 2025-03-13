@@ -12,10 +12,7 @@ use App\Repository\CategorieRepository;
 use App\Repository\PossedeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Avoir;
-use App\Entity\LigneCommande;
 use App\Entity\Produit;
-use App\Entity\Commande;
-use App\Entity\Statut;
 
 class HomeController extends AbstractController
 {
@@ -128,33 +125,34 @@ class HomeController extends AbstractController
             $snackDiscount = $snackAvoir->getProduit()->getValeur() ?? 0;
             $drinkDiscount = $drinkAvoir->getProduit()->getValeur() ?? 0;
             $totalDiscount = $snackDiscount + $drinkDiscount;
-            $discountDisplay = $totalDiscount; // Affichage sous forme d'un seul chiffre            
+            $discountDisplay = $totalDiscount;
             $total = ($snackAvoir->getPrix() + $drinkAvoir->getPrix() - $totalDiscount) * $data['quantity'];
     
             $session = $request->getSession();
             $panier = $session->get('panier', []);
     
-            // Modifier la section où le menu est ajouté au panier
             $menuEntry = [
                 'type' => 'menu',
                 'snack' => [
                     'id' => $snackAvoir->getProduit()->getId(),
                     'nom' => $snackAvoir->getProduit()->getNom(),
                     'taille' => $snackAvoir->getTaille()->getUnite(),
-                    'prix' => $snackAvoir->getPrix() // Conserver le prix original
+                    'prix' => $snackAvoir->getPrix()
                 ],
                 'drink' => [
                     'id' => $drinkAvoir->getProduit()->getId(),
                     'nom' => $drinkAvoir->getProduit()->getNom(),
                     'taille' => $drinkAvoir->getTaille()->getUnite(),
-                    'prix' => $drinkAvoir->getPrix() // Conserver le prix original
+                    'prix' => $drinkAvoir->getPrix()
                 ],
                 'quantity' => $data['quantity'],
-                'total' => ($snackAvoir->getPrix() + $drinkAvoir->getPrix() - $totalDiscount) * $data['quantity'],
+                'total' => $total,
                 'valeur' => $discountDisplay
             ];
+            // Génération d'un identifiant unique pour ce menu
             $menuEntry['menuId'] = 'menu-' . $snackAvoir->getProduit()->getId() . '-' . time();
     
+            // Fusionner le nouvel item avec le panier existant
             $panier[] = $menuEntry;
             $session->set('panier', $panier);
     
@@ -171,5 +169,55 @@ class HomeController extends AbstractController
                 'error' => 'Erreur serveur : ' . $e->getMessage()
             ], 500);
         }
+    }
+    #[Route('/panier/ajouter-produit', name: 'ajouter_produit', methods: ['POST'])]
+    public function ajouterProduit(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['produitId'], $data['taille'], $data['quantity'], $data['price'], $data['nom'])) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Données manquantes.'
+            ], 400);
+        }
+
+        $session = $request->getSession();
+        $panier = $session->get('panier', []);
+
+        // Recherche d'un produit existant
+        $found = false;
+        foreach ($panier as &$item) {
+            if ($item['type'] === 'normal' && $item['produitId'] == $data['produitId'] && $item['taille'] === $data['taille']) {
+                $item['quantity'] += $data['quantity'];
+                $found = true;
+                break;
+            }
+        }
+
+        if (!$found) {
+            $panier[] = [
+                'type' => 'normal',
+                'produitId' => $data['produitId'],
+                'taille' => $data['taille'],
+                'quantity' => $data['quantity'],
+                'price' => $data['price'],
+                'nom' => $data['nom']
+            ];
+        }
+
+        $session->set('panier', $panier);
+
+        return new JsonResponse([
+            'success' => true,
+            'panier' => $panier
+        ]);
+    }
+
+    #[Route('/panier/get', name: 'get_panier', methods: ['GET'])]
+    public function getPanier(Request $request): JsonResponse
+    {
+        $session = $request->getSession();
+        return new JsonResponse(['panier' => $session->get('panier', [])]);
     }
 }

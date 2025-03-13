@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,24 +8,19 @@
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body>
   <!-- Bootstrap JS Bundle (inclut Popper) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- script.html -->
   <script>
     // Variables globales
     let currentProduitId = null;
     let currentButton = null;
-    let currentMenuId = null;
-    let currentMenuButton = null;
-    let currentMenuProduitId = null;
-    let currentMenu = {
-      snack: null,
-      drink: null,
-      reduction: 2
-    };
+    let currentMenu = { snack: null, drink: null, reduction: 2 };
 
-    // Fonction pour mettre à jour le compteur du panier flottant
+    // Met à jour le compteur du panier flottant
     function updateFloatingCartCount() {
       const cartItems = document.querySelectorAll('#cartItemsContainer > div');
       let total = 0;
@@ -35,6 +31,7 @@
       document.getElementById('floatingCartCount').textContent = total;
     }
 
+    // Ouvre le modal de composition de menu
     function openMenuComposer() {
       currentMenu = { snack: null, drink: null, reduction: 2 };
       fetchMenuItems('snack');
@@ -42,29 +39,29 @@
       document.getElementById('menuStep2').classList.add('d-none');
       document.getElementById('previousStepButton').classList.add('d-none');
       document.getElementById('confirmMenuButton').classList.add('d-none');
-      const modal = new bootstrap.Modal(document.getElementById('menuComposerModal'));
-      modal.show();
+      new bootstrap.Modal(document.getElementById('menuComposerModal')).show();
     }
 
+    // Récupère les items du menu via l'API
     async function fetchMenuItems(type) {
       const response = await fetch(`/api/menu-items?type=${type}`);
       const items = await response.json();
       const container = type === 'snack' ? document.getElementById('snackOptions') : document.getElementById('drinkOptions');
       container.innerHTML = items.map(item => `
-        <div class="col-md-4 mb-3">
-          <div class="card h-100" onclick="selectMenuItem(${item.avoirId}, '${type}', event)">
-            <div class="card-body">
-              <h5 class="card-title">${item.nom}</h5>
-              <p class="card-text">${item.taille} - ${item.prix}€</p>
-            </div>
+      <div class="col-md-4 mb-3">
+        <div class="card h-100" onclick="selectMenuItem(${item.avoirId}, '${type}', event)">
+          <div class="card-body">
+            <h5 class="card-title">${item.nom}</h5>
+            <p class="card-text">${item.taille} - ${item.prix}€</p>
           </div>
         </div>
-      `).join('');
+      </div>
+    `).join('');
     }
 
+    // Sélection d'un item dans le menu
     function selectMenuItem(avoirId, type, event) {
-      const items = document.querySelectorAll(`#${type}Options .card`);
-      items.forEach(item => item.classList.remove('selected'));
+      document.querySelectorAll(`#${type}Options .card`).forEach(item => item.classList.remove('selected'));
       const selectedCard = event.target.closest('.card');
       selectedCard.classList.add('selected');
 
@@ -92,6 +89,7 @@
       document.getElementById('confirmMenuButton').classList.add('d-none');
     }
 
+    // Ajoute un menu au panier
     function addMenuToCart() {
       const quantity = parseInt(document.getElementById('menuQuantity').value);
 
@@ -108,37 +106,23 @@
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          // On stocke le panier dans le sessionStorage et on met à jour l'affichage
           sessionStorage.setItem('panier', JSON.stringify(data.panier));
           updateCartDisplay();
           bootstrap.Modal.getInstance(document.getElementById('menuComposerModal')).hide();
-          bootstrap.Modal.getInstance(document.getElementById('confirmAddMenuModal')).hide();
         }
       });
     }
 
-    function updateMenuQuantity(change) {
-      const input = document.getElementById('menuQuantity');
-      let newValue = parseInt(input.value) + change;
-      input.value = Math.max(1, Math.min(10, newValue));
-    }
-
+    // Met à jour l'affichage du panier
     function updateCartDisplay() {
-    const cartItemsContainer = document.getElementById('cartItemsContainer');
-    cartItemsContainer.innerHTML = '';
-    
-    console.log("Mise à jour du panier : début de la fonction updateCartDisplay");
-    
-    const panier = JSON.parse(sessionStorage.getItem('panier')) || [];
-    console.log("Panier récupéré depuis sessionStorage :", panier);
-    
-    panier.forEach((item, index) => {
-      console.log(`Traitement de l'item ${index} :`, item);
-      if (item.type === 'menu') {
-        const menuId = item.menuId ? item.menuId : `menu-${index}`;
-        console.log(`Rendu de l'item menu avec l'ID : ${menuId}`);
-        
-        cartItemsContainer.innerHTML += `
+      const cartItemsContainer = document.getElementById('cartItemsContainer');
+      cartItemsContainer.innerHTML = '';
+      const panier = JSON.parse(sessionStorage.getItem('panier')) || [];
+
+      panier.forEach((item, index) => {
+        if (item.type === 'menu') {
+          const menuId = item.menuId ? item.menuId : `menu-${index}`;
+          cartItemsContainer.innerHTML += `
           <div class="cart-item mb-3" id="${menuId}" data-type="menu" 
               data-snack-produitId="${item.snack.id}" data-snack-taille="${item.snack.taille}"
               data-drink-produitId="${item.drink.id}" data-drink-taille="${item.drink.taille}"
@@ -158,110 +142,39 @@
             </div>
           </div>
         `;
-      } else {
-        console.log(`L'item à l'index ${index} n'est pas de type 'menu'. Traitement par défaut ou à compléter.`);
-        // Traitement pour les produits classiques (si applicable)
-      }
-    });
-    
-    // Afficher ou masquer le formulaire de livraison selon le contenu du panier
-    if (cartItemsContainer.children.length > 0) {
-      console.log("Le panier contient des items. Affichage du formulaire de livraison.");
-      document.getElementById('deliveryFormContainer').style.display = 'block';
-    } else {
-      console.log("Le panier est vide. Masquage du formulaire de livraison.");
-      document.getElementById('deliveryFormContainer').style.display = 'none';
-    }
-    
-    console.log("Mise à jour du compteur flottant du panier.");
-    updateFloatingCartCount();
-    
-    console.log("Calcul du total du panier.");
-    calculateTotal();
-    
-    console.log("Fin de la mise à jour du panier.");
-  }
+        } else if (item.type === 'normal') {
+          const itemId = `panier-${item.produitId}-${item.taille}`;
+          cartItemsContainer.innerHTML += `
+          <div id="${itemId}" class="d-flex justify-content-between align-items-center mb-2" data-price="${item.price}" data-produit-id="${item.produitId}" data-taille="${item.taille}" data-type="normal">
+            <div class="transparent-frame">
+              <span>${item.nom} ${item.taille !== "unique" ? `(${item.taille})` : ''}</span>
+            </div>
+            <div class="quantity-container">
+              <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${item.produitId}', '${item.taille}', -1)">-</button>
+              <span class="panier-quantite mx-2">${item.quantity}</span>
+              <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${item.produitId}', '${item.taille}', 1)">+</button>
+            </div>
+          </div>
+        `;
+        }
+      });
 
-
-    function openConfirmModal(produitId, button) {
-      currentProduitId = produitId;
-      currentButton = button;
-      let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddModal'));
-      confirmModal.show();
+      document.getElementById('deliveryFormContainer').style.display = cartItemsContainer.children.length > 0 ? 'block' : 'none';
+      updateFloatingCartCount();
+      calculateTotal();
     }
 
-    document.getElementById('confirmAddButton').addEventListener('click', function () {
-      ajouterAuPanierConfirmed(currentProduitId, currentButton);
-      bootstrap.Modal.getInstance(document.getElementById('confirmAddModal')).hide();
-    });
-
-    function openConfirmMenuModal(produitId, button) {
-      currentMenuId = produitId;
-      currentMenuButton = button;
-      let confirmModal = new bootstrap.Modal(document.getElementById('confirmAddMenuModal'));
-      confirmModal.show();
-    }
-
-    function openMenuModal(produitId, button) {
-      var compositionHtml = document.getElementById('menu-composition-' + produitId).innerHTML;
-      document.getElementById('modalMenuContent').innerHTML = compositionHtml;
-      let menuModal = new bootstrap.Modal(document.getElementById('menuCompositionModal'));
-      menuModal.show();
-    }
-
-    function ajouterMenuDirect(produitId, button) {
-      ajouterMenuAuPanier(produitId);
-      let menuModalEl = document.getElementById('menuCompositionModal');
-      let menuModalInstance = bootstrap.Modal.getInstance(menuModalEl);
-      if (menuModalInstance) {
-        menuModalInstance.hide();
-      }
-    }
-
-    document.querySelectorAll('.menu-composition').forEach((menuComposition) => {
-      const addButton = menuComposition.querySelector('button[onclick^="ajouterMenuDirect"]');
-      if (addButton) {
-        addButton.addEventListener('click', function (event) {
-          const valeur = parseFloat(menuComposition.dataset.valeur);
-          if (isNaN(valeur) || valeur <= 0) return;
-          let sum = 0;
-          const selects = menuComposition.querySelectorAll('.menu-select');
-          selects.forEach(select => {
-            const selectedOption = select.options[select.selectedIndex];
-            const priceMatch = selectedOption.textContent.match(/\((\d+\.?\d*)€\)/);
-            if (priceMatch) {
-              const price = parseFloat(priceMatch[1]);
-              sum += price;
-            }
-          });
-          const message = `Félicitations !<br>
-          En composant ce menu, vous bénéficiez d'une réduction de ${valeur}€.<br>
-          Prix initial : ${sum.toFixed(2)}€<br>
-          Prix final : ${(sum - valeur).toFixed(2)}€.`;
-          document.getElementById('savingsMessage').innerHTML = message;
-          const modal = new bootstrap.Modal(document.getElementById('savingsModal'));
-          modal.show();
-        });
-      }
-    });
-
-    document.getElementById('confirmAddMenuButton').addEventListener('click', function () {
-      if (currentMenuId !== null) {
-        ajouterMenuAuPanier(currentMenuId);
-        animateAddToCart(currentMenuButton);
-      }
-      bootstrap.Modal.getInstance(document.getElementById('confirmAddMenuModal')).hide();
-    });
-
+    // Ajout d'un produit normal au panier
     function ajouterAuPanierConfirmed(produitId, button) {
       const quantiteInput = document.getElementById('quantite-' + produitId);
       const quantite = parseInt(quantiteInput.value);
       const tailleElement = document.getElementById('taille-' + produitId);
       const taille = tailleElement ? tailleElement.value : "unique";
-      const itemId = `panier-${produitId}-${taille}`;
+      
       let price = 0;
       const produitCadre = document.getElementById('nom-' + produitId).closest('.produit-cadre');
 
+      // Calcul du prix
       if (!tailleElement) {
         const prixElement = produitCadre.querySelector('.produit-prix');
         const prixText = prixElement.textContent;
@@ -273,75 +186,48 @@
         price = parseFloat(prixText.replace('€', ''));
       }
 
-      const existingItem = document.getElementById(itemId);
-      let quantiteExistante = 0;
-      if (existingItem) {
-        quantiteExistante = parseInt(existingItem.querySelector('.panier-quantite').textContent);
-      }
-
-      if (quantiteExistante + quantite > 10) {
-        showErrorPopup("Vous ne pouvez pas commander plus de 10 fois le même article !");
-        quantiteInput.value = 10 - quantiteExistante;
-        return;
-      }
-
-      if (quantite > 0) {
-        const cartItemsContainer = document.getElementById('cartItemsContainer');
-        const emptyMsg = document.getElementById('emptyCartMsg');
-        if (emptyMsg) {
-          emptyMsg.remove();
+      fetch('/panier/ajouter-produit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          produitId: produitId,
+          taille: taille,
+          quantity: quantite,
+          price: price,
+          nom: document.getElementById('nom-' + produitId).textContent
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          sessionStorage.setItem('panier', JSON.stringify(data.panier));
+          updateCartDisplay();
+          animateAddToCart(button);
         }
-        const cartItem = document.getElementById(itemId);
-        if (cartItem) {
-          const span = cartItem.querySelector('.panier-quantite');
-          span.textContent = parseInt(span.textContent) + quantite;
-        } else {
-          cartItemsContainer.innerHTML += `
-            <div id="${itemId}" class="d-flex justify-content-between align-items-center mb-2" data-price="${price}">
-              <div class="transparent-frame">
-                <span>${document.getElementById('nom-' + produitId).textContent} ${taille !== "unique" ? `(${taille})` : ''}</span>
-              </div>
-              <div class="quantity-container">
-                <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', -1)">-</button>
-                <span class="panier-quantite mx-2">${quantite}</span>
-                <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${produitId}', '${taille}', 1)">+</button>
-              </div>
-            </div>
-          `;
-          calculateTotal();
-        }
-        document.getElementById('deliveryFormContainer').style.display = 'block';
-      }
-      animateAddToCart(button);
-      updateFloatingCartCount();
+      });
     }
 
+    // Animation d'ajout au panier
     function animateAddToCart(startElement) {
       const cartIcon = document.getElementById('floatingCart');
       if (!cartIcon) return;
       cartIcon.style.transition = "transform 0.3s ease-out";
       cartIcon.style.transform = "scale(1.5)";
-      setTimeout(() => {
-        cartIcon.style.transform = "scale(1)";
-      }, 300);
+      setTimeout(() => { cartIcon.style.transform = "scale(1)"; }, 300);
     }
 
     function retirerProduit(produitId, taille) {
       if (!confirm("Confirmer la suppression ?")) return;
       const itemId = `panier-${produitId}-${taille}`;
       const element = document.getElementById(itemId);
-      if (element) {
-        element.remove();
-      }
+      if (element) { element.remove(); }
       updateCartAfterRemoval();
     }
 
     function retirerMenu(menuId) {
       if (!confirm("Confirmer la suppression du menu ?")) return;
       const element = document.getElementById(menuId);
-      if (element) {
-        element.remove();
-      }
+      if (element) { element.remove(); }
       updateCartAfterRemoval();
     }
 
@@ -353,17 +239,41 @@
       }
       calculateTotal();
       updateFloatingCartCount();
-    }
 
-    function showErrorPopup(message) {
-      document.getElementById('errorMessage').textContent = message;
-      let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-      errorModal.show();
-    }
-
-    function openCartModal() {
-      const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
-      cartModal.show();
+      // Mettez à jour le sessionStorage en fonction du DOM
+      let updatedCart = [];
+      cartItemsContainer.querySelectorAll('div[data-type]').forEach(item => {
+        const type = item.getAttribute('data-type');
+        if (type === 'normal') {
+          updatedCart.push({
+            type: 'normal',
+            produitId: parseInt(item.getAttribute('data-produit-id')),
+            taille: item.getAttribute('data-taille'),
+            quantity: parseInt(item.querySelector('.panier-quantite').textContent),
+            price: parseFloat(item.getAttribute('data-price')),
+            nom: item.querySelector('.transparent-frame span').textContent
+          });
+        } else if (type === 'menu') {
+          updatedCart.push({
+            type: 'menu',
+            menuId: item.id,
+            snack: {
+              id: parseInt(item.getAttribute('data-snack-produitId')),
+              taille: item.getAttribute('data-snack-taille'),
+              nom: '' // Vous pouvez ajouter le nom si besoin
+            },
+            drink: {
+              id: parseInt(item.getAttribute('data-drink-produitId')),
+              taille: item.getAttribute('data-drink-taille'),
+              nom: ''
+            },
+            quantity: parseInt(item.querySelector('.panier-quantite').textContent),
+            total: parseFloat(item.getAttribute('data-price')),
+            valeur: 0 // Ajustez selon votre logique
+          });
+        }
+      });
+      sessionStorage.setItem('panier', JSON.stringify(updatedCart));
     }
 
     function modifierQuantite(produitId, taille, change) {
@@ -381,6 +291,7 @@
       span.textContent = nouvelleQuantite;
       calculateTotal();
       updateFloatingCartCount();
+      updateSessionCart();
     }
 
     function modifierQuantiteMenu(menuId, change) {
@@ -398,12 +309,13 @@
       span.textContent = nouvelleQuantite;
       calculateTotal();
       updateFloatingCartCount();
+      updateSessionCart();
     }
 
     function calculateTotal() {
       let total = 0;
       document.querySelectorAll('#cartItemsContainer > div').forEach(item => {
-        const price = parseFloat(item.dataset.price);
+        const price = parseFloat(item.getAttribute('data-price'));
         const quantity = parseInt(item.querySelector('.panier-quantite').textContent);
         total += price * quantity;
       });
@@ -413,110 +325,75 @@
     function updateQuantity(produitId, change) {
       const input = document.getElementById('quantite-' + produitId);
       let value = parseInt(input.value) + change;
-      if (value > 10) {
-        alert("Vous ne pouvez pas sélectionner plus de 10 articles !");
-        value = 10;
-      }
+      if (value > 10) { alert("Vous ne pouvez pas sélectionner plus de 10 articles !"); value = 10; }
       input.value = Math.max(1, Math.min(10, value));
     }
 
-    function updateMenuQuantity(produitId, change) {
-      const input = document.getElementById(`quantite-menu-${produitId}`);
-      let newValue = parseInt(input.value) + change;
-      if (newValue < 1) newValue = 1;
-      if (newValue > 10) newValue = 10;
-      input.value = newValue;
-    }
-
-    function submitOrder(event) {
-      event.preventDefault();
-      const cartItems = document.querySelectorAll('#cartItemsContainer > div');
-      if (cartItems.length === 0) {
-        alert('Votre panier est vide !');
-        return;
-      }
-      const formData = {
-        user: {},
-        cart: []
-      };
-
-      const userIdElement = document.getElementById('userId');
-      if (userIdElement) {
-        formData.user.id = userIdElement.value;
-      } else {
-        formData.user.prenom = document.getElementById('prenom').value;
-        formData.user.nom = document.getElementById('nom').value;
-      }
-
-      cartItems.forEach(item => {
-        if (item.dataset.type === 'menu') {
-          const quantity = parseInt(item.querySelector('.panier-quantite').textContent);
-          // Pour les menus, récupération des infos snack et drink
-          const snackProduitId = parseInt(item.getAttribute('data-snack-produitId'));
-          const drinkProduitId = parseInt(item.getAttribute('data-drink-produitId'));
-          const snackTaille = item.getAttribute('data-snack-taille');
-          const drinkTaille = item.getAttribute('data-drink-taille');
-
-          // Ajout de l'item snack
-          formData.cart.push({
-            produitId: snackProduitId,
-            taille: snackTaille,
-            quantity: quantity
+    // Synchronise le sessionStorage avec le DOM du panier
+    function updateSessionCart() {
+      let cartItemsContainer = document.getElementById('cartItemsContainer');
+      let updatedCart = [];
+      cartItemsContainer.querySelectorAll('div[data-type]').forEach(item => {
+        const type = item.getAttribute('data-type');
+        if (type === 'normal') {
+          updatedCart.push({
+            type: 'normal',
+            produitId: parseInt(item.getAttribute('data-produit-id')),
+            taille: item.getAttribute('data-taille'),
+            quantity: parseInt(item.querySelector('.panier-quantite').textContent),
+            price: parseFloat(item.getAttribute('data-price')),
+            nom: item.querySelector('.transparent-frame span').textContent
           });
-          // Ajout de l'item drink
-          formData.cart.push({
-            produitId: drinkProduitId,
-            taille: drinkTaille,
-            quantity: quantity
-          });
-        } else {
-          // Pour les produits "normaux"
-          // On vérifie si des data-attributes existent, sinon on utilise le découpage de l'id
-          let produitId, taille;
-          if (item.dataset.produitId && item.dataset.taille) {
-            produitId = parseInt(item.dataset.produitId);
-            taille = item.dataset.taille;
-          } else {
-            const parts = item.id.split('-'); // on attend "produit-<id>-<taille>"
-            produitId = parseInt(parts[1]);
-            taille = parts[2] || null;
-          }
-          // En cas d'absence de taille, vous pouvez définir une valeur par défaut ou laisser null pour gérer l'erreur côté serveur
-          formData.cart.push({
-            produitId: produitId,
-            taille: taille,
-            quantity: parseInt(item.querySelector('.panier-quantite').textContent)
+        } else if (type === 'menu') {
+          updatedCart.push({
+            type: 'menu',
+            menuId: item.id,
+            snack: {
+              id: parseInt(item.getAttribute('data-snack-produitId')),
+              taille: item.getAttribute('data-snack-taille'),
+              nom: ''
+            },
+            drink: {
+              id: parseInt(item.getAttribute('data-drink-produitId')),
+              taille: item.getAttribute('data-drink-taille'),
+              nom: ''
+            },
+            quantity: parseInt(item.querySelector('.panier-quantite').textContent),
+            total: parseFloat(item.getAttribute('data-price')),
+            valeur: 0
           });
         }
       });
-
-      fetch('/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(formData)
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            document.getElementById('cartItemsContainer').innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
-            document.getElementById('deliveryFormContainer').style.display = 'none';
-            sessionStorage.removeItem('panier');
-            updateCartDisplay();
-            bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
-            window.location.href = '/commande'; // Redirection vers la page de commande
-        } else {
-            alert('Erreur : ' + data.error);
-        }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Une erreur est survenue lors de la validation du panier.');
-        });
+      sessionStorage.setItem('panier', JSON.stringify(updatedCart));
     }
 
+    // Lors du chargement de la page, vous pouvez choisir de vider le panier ou de le conserver
+    document.addEventListener("DOMContentLoaded", function () {
+      fetch('/panier/get')
+        .then(response => response.json())
+        .then(data => {
+          sessionStorage.setItem('panier', JSON.stringify(data.panier));
+          updateCartDisplay();
+          triCategorie();
+        });
+    });
+
+    function openConfirmModal(produitId, button) {
+      currentProduitId = produitId;
+      currentButton = button;
+      new bootstrap.Modal(document.getElementById('confirmAddModal')).show();
+    }
+
+    // Bouton de confirmation pour l'ajout d'un produit normal
+    document.getElementById('confirmAddButton').addEventListener('click', function () {
+      ajouterAuPanierConfirmed(currentProduitId, currentButton);
+      bootstrap.Modal.getInstance(document.getElementById('confirmAddModal')).hide();
+    });
+
+    // Ouvre le modal du panier
+    function openCartModal() {
+      new bootstrap.Modal(document.getElementById('cartModal')).show();
+    }
 
     function triCategorie() {
       const sortValue = document.getElementById('sortSelect').value;
@@ -564,54 +441,119 @@
       return nameElement ? nameElement.textContent.trim().toLowerCase() : '';
     }
 
-    // Lors du chargement de la page, vider le panier stocké en sessionStorage
-    document.addEventListener("DOMContentLoaded", function () {
-      sessionStorage.removeItem('panier');
-      updateCartDisplay();
-      triCategorie();
-    });
+    function submitOrder(event) {
+      event.preventDefault();
+      const cartItems = document.querySelectorAll('#cartItemsContainer > div');
+      if (cartItems.length === 0) {
+        alert('Votre panier est vide !');
+        return;
+      }
+      const formData = { user: {}, cart: [] };
+
+      const userIdElement = document.getElementById('userId');
+      if (userIdElement) {
+        formData.user.id = userIdElement.value;
+      } else {
+        formData.user.prenom = document.getElementById('prenom').value;
+        formData.user.nom = document.getElementById('nom').value;
+      }
+
+      cartItems.forEach(item => {
+        if (item.getAttribute('data-type') === 'menu') {
+          const quantity = parseInt(item.querySelector('.panier-quantite').textContent);
+          const snackProduitId = parseInt(item.getAttribute('data-snack-produitId'));
+          const drinkProduitId = parseInt(item.getAttribute('data-drink-produitId'));
+          const snackTaille = item.getAttribute('data-snack-taille');
+          const drinkTaille = item.getAttribute('data-drink-taille');
+          formData.cart.push({ produitId: snackProduitId, taille: snackTaille, quantity: quantity });
+          formData.cart.push({ produitId: drinkProduitId, taille: drinkTaille, quantity: quantity });
+        } else {
+          let produitId, taille;
+          if (item.dataset.produitId && item.dataset.taille) {
+            produitId = parseInt(item.dataset.produitId);
+            taille = item.dataset.taille;
+          } else {
+            const parts = item.id.split('-');
+            produitId = parseInt(parts[1]);
+            taille = parts[2] || null;
+          }
+          formData.cart.push({
+            produitId: produitId,
+            taille: taille,
+            quantity: parseInt(item.querySelector('.panier-quantite').textContent)
+          });
+        }
+      });
+
+      fetch('/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(formData)
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('cartItemsContainer').innerHTML = '<p id="emptyCartMsg">Votre panier est vide.</p>';
+            document.getElementById('deliveryFormContainer').style.display = 'none';
+            sessionStorage.removeItem('panier');
+            updateCartDisplay();
+            bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+            window.location.href = '/commande';
+          } else {
+            alert('Erreur : ' + data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Une erreur est survenue lors de la validation du panier.');
+        });
+    }
   </script>
-    <style>
-        .product-name {
-            max-width: 100px;
-            /* Ajustez cette valeur selon vos besoins */
-            white-space: nowrap;
-            /* Pour empêcher le retour à la ligne si vous le souhaitez */
-            overflow: hidden;
-            /* Masquer le texte qui dépasse */
-            text-overflow: ellipsis;
-            /* Afficher "..." pour le texte tronqué */
-        }
 
-        /* Pour les écrans encore plus petits, vous pouvez réduire la largeur maximale */
-        @media (max-width: 414px) {
-            .product-name {
-                max-width: 100px;
-                /* Par exemple, ajuster en fonction de vos tests */
-            }
-        }
+  <style>
+    .product-name {
+      max-width: 100px;
+      /* Ajustez cette valeur selon vos besoins */
+      white-space: nowrap;
+      /* Pour empêcher le retour à la ligne si vous le souhaitez */
+      overflow: hidden;
+      /* Masquer le texte qui dépasse */
+      text-overflow: ellipsis;
+      /* Afficher "..." pour le texte tronqué */
+    }
 
-        .transparent-frame {
-            width: 75%;
-            /* 75% de la largeur de l'écran (ou du conteneur parent) */
-            /* Bordure fine et transparente */
-            padding: 10px;
-            /* Un peu d'espace intérieur */
-            box-sizing: border-box;
-            /* Pour inclure padding et bordure dans la largeur */
-            background-color: transparent;
-            /* Fond transparent */
-            border: transparent;
-        }
+    /* Pour les écrans encore plus petits, vous pouvez réduire la largeur maximale */
+    @media (max-width: 414px) {
+      .product-name {
+        max-width: 100px;
+        /* Par exemple, ajuster en fonction de vos tests */
+      }
+    }
 
-        .quantity-container {
-            display: flex;
-            align-items: center;
-            /* Centre verticalement */
-            justify-content: center;
-            /* Centre horizontalement (si nécessaire) */
-        }
-    </style>
+    .transparent-frame {
+      width: 75%;
+      /* 75% de la largeur de l'écran (ou du conteneur parent) */
+      /* Bordure fine et transparente */
+      padding: 10px;
+      /* Un peu d'espace intérieur */
+      box-sizing: border-box;
+      /* Pour inclure padding et bordure dans la largeur */
+      background-color: transparent;
+      /* Fond transparent */
+      border: transparent;
+    }
+
+    .quantity-container {
+      display: flex;
+      align-items: center;
+      /* Centre verticalement */
+      justify-content: center;
+      /* Centre horizontalement (si nécessaire) */
+    }
+  </style>
 </body>
 
 </html>
