@@ -138,9 +138,16 @@ class CheckoutController extends AbstractController
             );
             foreach ($restItems as $item) {
                 $tailleId = $connection->fetchOne('SELECT id FROM taille WHERE unite = ?', [$item['taille']]);
+
+                // Vérification si le produit peut avoir une taille NULL
                 if (!$tailleId) {
-                    return new JsonResponse(['success' => false, 'error' => "Taille invalide pour le produit ID {$item['produitId']}"], 400);
+                    $tailleId = $connection->fetchOne('SELECT taille_id FROM avoir WHERE produit_id = ? LIMIT 1', [$item['produitId']]);
                 }
+
+                if ($tailleId === false || $tailleId === null) {
+                    $tailleId = null; // Permet d'enregistrer sans taille si applicable
+                }
+
                 $prix = $connection->fetchOne('SELECT prix FROM avoir WHERE produit_id = ? AND taille_id = ?', [$item['produitId'], $tailleId]);
                 if ($prix === false || $prix === null) {
                     return new JsonResponse(['success' => false, 'error' => "Prix non trouvé pour le produit ID {$item['produitId']}"], 400);
