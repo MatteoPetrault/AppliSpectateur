@@ -30,12 +30,12 @@
         <div class="status-message" id="statusMessage"></div>
         <div id="paymentNotice"></div>
         
-        {# Bouton Annuler uniquement pour le statut Enregistrée #}
+        {# Bouton d'annulation visible uniquement si le statut est "Enregistrée" #}
         {% if statut == 'Enregistrée' %}
-            <button id="cancelButton" class="cancel-button" onclick="cancelOrder()">Annuler la commande</button>
+            <button id="cancelButton" type="button" class="cancel-button">Annuler la commande</button>
         {% endif %}
 
-        {# Section avis uniquement pour certains statuts #}
+        {# Section avis affichée pour certains statuts #}
         {% if statut in ['En cours de préparation', 'Prête', 'Terminée'] %}
             <div id="feedbackSection" class="feedback-section">
                 <h3>Votre avis compte !</h3>
@@ -46,30 +46,14 @@
                     <span onclick="rate(4)">★</span>
                     <span onclick="rate(5)">★</span>
                 </div>
-                <textarea id="comment" placeholder="Laissez un commentaire (optionnel)">{{ produit.commentaireAvis ?? '' }}</textarea>
-                <button onclick="submitFeedback()">Envoyer</button>
+                <textarea id="comment" placeholder="Laissez un commentaire (optionnel)">{{ commande.commentaireAvis ?? '' }}</textarea>
+                <button type="button" onclick="submitFeedback()">Envoyer</button>
             </div>
         {% endif %}
 
         <button id="darkModeToggle" onclick="toggleDarkMode()">Mode Cinéma 🎥</button>
     </div>
+    {# Inclusion du script avec la logique d'interface et les appels AJAX #}
     {% include 'commande/script.html' %}
-    <script>
-        // Script existant...
-        
-        // Fonction pour annuler la commande (à implémenter)
-        function cancelOrder() {
-            if(confirm("Êtes-vous sûr de vouloir annuler la commande ?")) {
-                // Ajouter ici la logique d'annulation
-                fetch("{{ path('commande_annuler', {'id': commande.id}) }}")
-                    .then(response => response.json())
-                    .then(data => {
-                        if(data.success) {
-                            location.reload();
-                        }
-                    });
-            }
-        }
-    </script>
 </body>
 </html>

@@ -13,6 +13,8 @@ use App\Repository\PossedeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Avoir;
 use App\Entity\Produit;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+
 
 class HomeController extends AbstractController
 {
@@ -249,6 +251,72 @@ class HomeController extends AbstractController
             'panier' => $panier
         ]);
     }
+    /**
+     * Retirer un produit normal du panier.
+     *
+     * @param Request $request
+     * @param SessionInterface $session
+     * @return Response
+     */
+    #[Route('/panier/retirer-produit', methods: ['POST'])]
+    public function retirerProduit(Request $request, SessionInterface $session): Response
+    {
+        $data = json_decode($request->getContent(), true);
+        $produitId = $data['produitId'] ?? null;
+        $taille = $data['taille'] ?? null;
+
+        if ($produitId === null || $taille === null) {
+            return $this->json(['success' => false, 'error' => 'Données invalides.']);
+        }
+
+        $panier = $session->get('panier', []);
+
+        foreach ($panier as $key => $item) {
+            if (isset($item['type']) && $item['type'] === 'normal'
+                && isset($item['produitId']) && $item['produitId'] == $produitId
+                && isset($item['taille']) && $item['taille'] === $taille) {
+                unset($panier[$key]);
+            }
+        }
+
+        $panier = array_values($panier);
+        $session->set('panier', $panier);
+
+        return $this->json(['success' => true, 'panier' => $panier]);
+    }
+
+
+    /**
+     * Retirer un menu du panier.
+     *
+     * @param Request $request
+     * @param SessionInterface $session
+     * @return Response
+     */
+    #[Route('/panier/retirer-menu', methods: ['POST'])]
+    public function retirerMenu(Request $request, SessionInterface $session): Response
+    {
+        $data = json_decode($request->getContent(), true);
+        $menuId = $data['menuId'] ?? null;
+
+        if ($menuId === null) {
+            return $this->json(['success' => false, 'error' => 'Données invalides.']);
+        }
+
+        $panier = $session->get('panier', []);
+
+        foreach ($panier as $key => $item) {
+            if (isset($item['type']) && $item['type'] === 'menu'
+                && isset($item['menuId']) && $item['menuId'] == $menuId) {
+                unset($panier[$key]);
+            }
+        }
+
+        $panier = array_values($panier);
+        $session->set('panier', $panier);
+
+        return $this->json(['success' => true, 'panier' => $panier]);
+    }
 
     #[Route('/panier/get', name: 'get_panier', methods: ['GET'])]
     public function getPanier(Request $request): JsonResponse
@@ -256,4 +324,12 @@ class HomeController extends AbstractController
         $session = $request->getSession();
         return new JsonResponse(['panier' => $session->get('panier', [])]);
     }
+    #[Route('/panier/vider', methods: ['POST'])]
+    public function viderPanier(Request $request): Response
+    {
+        $session = $request->getSession();
+        $session->remove('panier');
+        return $this->json(['success' => true]);
+    }
+
 }

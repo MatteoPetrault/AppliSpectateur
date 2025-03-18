@@ -1,172 +1,189 @@
-<!DOCTYPE html>
-<html lang="en">
+<script>
+    // Définition de la map des statuts pour l'interface
+    const statusMap = {
+        'En cours de préparation': { 
+            progress: 15, 
+            step: 1, 
+            emoji: '🍿',
+            message: 'Préparation de vos produits en cours'
+        },
+        'En attente de récupération': { 
+            progress: 50, 
+            step: 2, 
+            emoji: '🎬',
+            message: 'Votre commande est prête !'
+        },
+        'Terminé': { 
+            progress: 100, 
+            step: 3, 
+            emoji: '🎉',
+            message: 'Bon film ! 🎥'
+        },
+        'Annulé': { 
+            progress: 0, 
+            step: 0, 
+            emoji: '❌',
+            message: 'Commande annulée'
+        }
+    };
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-
-<body>
-    <script>
-        // Mise à jour du statusMap
-        const statusMap = {
-            'En cours de préparation': { 
-                progress: 15, 
-                step: 1, 
-                emoji: '🍿',
-                message: 'Préparation de vos produits en cours'
-            },
-            'En attente de récupération': { 
-                progress: 50, 
-                step: 2, 
-                emoji: '🎬',
-                message: 'Votre commande est prête !'
-            },
-            'Terminé': { 
-                progress: 100, 
-                step: 3, 
-                emoji: '🎉',
-                message: 'Bon film ! 🎥'
-            },
-            'Annulé': { 
-                progress: 0, 
-                step: 0, 
-                emoji: '❌',
-                message: 'Commande annulée'
-            }
+    // Fonction updateInterface qui met à jour l'interface en fonction du statut retourné
+    function updateInterface(data) {
+        // Normalisation du statut pour l'affichage
+        const normalizedStatus = data.statut === 'Enregistrée' 
+            ? 'En cours de préparation' 
+            : data.statut;
+        
+        const statusInfo = statusMap[normalizedStatus] || { 
+            progress: 0, 
+            step: 0, 
+            emoji: '❓',
+            message: 'Statut inconnu'
         };
 
-        // Fonction updateInterface simplifiée
-        function updateInterface(data) {
-            // Normalisation du statut
-            const normalizedStatus = data.statut === 'Enregistrée' 
-                ? 'En cours de préparation' 
-                : data.statut;
-            
-            const statusInfo = statusMap[normalizedStatus] || { 
-                progress: 0, 
-                step: 0, 
-                emoji: '❓',
-                message: 'Statut inconnu'
-            };
+        // Mise à jour de la barre de progression
+        document.getElementById('progress').style.width = statusInfo.progress + '%';
 
-            // Mise à jour de la progression
-            document.getElementById('progress').style.width = statusInfo.progress + '%';
+        // Mise à jour des étapes visuelles
+        document.querySelectorAll('.status-step').forEach((step, index) => {
+            const isActive = index < statusInfo.step;
+            const isCurrent = index + 1 === statusInfo.step;
+            step.classList.toggle('active-step', isActive);
+            step.querySelector('.step-icon').classList.toggle('pulse', isCurrent);
+        });
 
-            // Mise à jour des étapes
-            document.querySelectorAll('.status-step').forEach((step, index) => {
-                const isActive = index < statusInfo.step;
-                const isCurrent = index + 1 === statusInfo.step;
-                
-                step.classList.toggle('active-step', isActive);
-                step.querySelector('.step-icon').classList.toggle('pulse', isCurrent);
+        // Affichage du message de statut
+        document.getElementById('statusMessage').innerHTML = 
+            `${statusInfo.emoji} ${statusInfo.message}`;
+
+        // Mise à jour de la notification de paiement pour le statut "En attente de récupération"
+        const paymentNotice = document.getElementById('paymentNotice');
+        paymentNotice.innerHTML = (normalizedStatus === 'En attente de récupération') ? `
+            <div class="client-info">
+                Nom : ${data.nom}<br>
+                Prénom : ${data.prenom}<br>
+                Numéro de commande : ${data.numero_commande}
+            </div>
+            <div class="payment-notice">
+                <strong>🚨 Votre commande est prête !</strong><br>
+                Merci de venir la récupérer et régler au comptoir.
+            </div>
+        ` : '';
+
+        // Contrôle de la visibilité du bouton d'annulation selon le statut réel
+        const cancelButton = document.getElementById('cancelButton');
+        if (cancelButton) {
+            cancelButton.style.display = (data.statut === 'Enregistrée') ? 'block' : 'none';
+        }
+    }
+
+
+    // Rafraîchissement de l'interface toutes les 10 secondes
+    setInterval(() => {
+        fetch("{{ path('commande_statut', {'id': commande.id}) }}")
+            .then(response => response.json())
+            .then(data => updateInterface(data))
+            .catch(error => {
+                console.error('Erreur:', error);
+                document.getElementById('statusMessage').innerHTML = '⚠️ Problème de connexion';
             });
+    }, 10000);
 
-            // Affichage du message
-            document.getElementById('statusMessage').innerHTML = 
-                `${statusInfo.emoji} ${statusInfo.message}`;
+    // Mise à jour initiale de l'interface avec les données de Twig
+    updateInterface({ 
+        statut: "{{ statut }}", 
+        nom: "", 
+        prenom: "", 
+        numero_commande: "{{ commande.id }}" 
+    });
 
-            // Gestion de la notification de paiement
-            const paymentNotice = document.getElementById('paymentNotice');
-            paymentNotice.innerHTML = normalizedStatus === 'En attente de récupération' ? `
-                <div class="client-info">
-                    Nom : ${data.nom}<br>
-                    Prénom : ${data.prenom}<br>
-                    Numéro de commande : ${data.numero_commande}
-                </div>
-                <div class="payment-notice">
-                    <strong>🚨 Votre commande est prête !</strong><br>
-                    Merci de venir la récupérer et régler au comptoir.
-                </div>
-            ` : '';
-        }
-
-        function getMessage(statut) {
-            switch (statut) {
-                case 'Enregistrée': return 'Préparation de vos produits en cours';
-                case 'En cours de préparation': return 'Préparation de vos produits en cours';
-                case 'En attente de récupération': return 'Votre commande est prête !';
-                case 'Terminé': return 'Bon film ! 🎥';
-                case 'Annulé': return 'Commande annulée';
-                default: return 'Statut inconnu';
-            }
-        }
-
-        setInterval(() => {
-            fetch("{{ path('commande_statut', {'id': commande.id}) }}")
-                .then(response => response.json())
-                .then(data => updateInterface(data))
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    document.getElementById('statusMessage').innerHTML = '⚠️ Problème de connexion';
-                });
-        }, 10000);
-
-        updateInterface({ statut: "{{ statut }}" });
-
-        let currentRating = 0;
-
-        function rate(rating) {
-            currentRating = rating;
-            const stars = document.querySelectorAll('.star-rating span');
-            stars.forEach((star, index) => {
-                star.style.color = index < rating ? '#ffcc00' : '#ccc';
-            });
-        }
-
-        function submitFeedback() {
-            const comment = document.getElementById('comment').value;
-            if (currentRating > 0) {
-                // Préparer les données à envoyer
-                const feedbackData = {
-                    note: currentRating,
-                    commentaire: comment
-                };
-
-                // Envoyer les données au serveur
-                fetch("{{ path('enregistrer_avis', {'id': commande.id}) }}", {
+    // Gestion de l'annulation de la commande en AJAX
+    const cancelButton = document.getElementById('cancelButton');
+    if (cancelButton) {
+        cancelButton.addEventListener('click', function() {
+            if (confirm('Êtes-vous sûr de vouloir annuler la commande ?')) {
+                fetch("{{ path('commande_annuler', {'id': commande.id}) }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest' // Pour indiquer que c'est une requête AJAX
-                    },
-                    body: JSON.stringify(feedbackData)
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert("Merci pour votre avis !");
-                            // Masquer la section feedbackSection
-                            document.getElementById('feedbackSection').style.display = 'none';
-                        } else {
-                            alert(data.message); // Afficher le message d'erreur retourné par le serveur
-                            if (data.message === 'Un avis a déjà été soumis pour cette commande.') {
-                                // Masquer la section feedbackSection si un avis existe déjà
-                                document.getElementById('feedbackSection').style.display = 'none';
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erreur:', error);
-                        alert("Une erreur s'est produite lors de l'envoi de votre avis.");
-                    });
-            } else {
-                alert("Veuillez donner une note avant de soumettre.");
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Mettre à jour l'interface avec le nouveau statut "Annulé"
+                        updateInterface({ 
+                            statut: data.statut, 
+                            nom: "", 
+                            prenom: "", 
+                            numero_commande: "{{ commande.id }}" 
+                        });
+                        // Masquer le bouton d'annulation
+                        cancelButton.style.display = 'none';
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert("Une erreur s'est produite lors de l'annulation.");
+                });
             }
+        });
+    }
+
+    let currentRating = 0;
+    function rate(rating) {
+        currentRating = rating;
+        const stars = document.querySelectorAll('.star-rating span');
+        stars.forEach((star, index) => {
+            star.style.color = index < rating ? '#ffcc00' : '#ccc';
+        });
+    }
+
+    function submitFeedback() {
+        const comment = document.getElementById('comment').value;
+        if (currentRating > 0) {
+            const feedbackData = {
+                note: currentRating,
+                commentaire: comment
+            };
+
+            fetch("{{ path('enregistrer_avis', {'id': commande.id}) }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(feedbackData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Merci pour votre avis !");
+                    document.getElementById('feedbackSection').style.display = 'none';
+                } else {
+                    alert(data.message);
+                    if (data.message === 'Un avis a déjà été soumis pour cette commande.') {
+                        document.getElementById('feedbackSection').style.display = 'none';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert("Une erreur s'est produite lors de l'envoi de votre avis.");
+            });
+        } else {
+            alert("Veuillez donner une note avant de soumettre.");
         }
+    }
 
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            const button = document.getElementById('darkModeToggle');
-            if (document.body.classList.contains('dark-mode')) {
-                button.textContent = 'Mode Lumière ☀️';
-            } else {
-                button.textContent = 'Mode Cinéma 🎥';
-            }
-        }
-    </script>
-
-</body>
-
-</html>
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const button = document.getElementById('darkModeToggle');
+        button.textContent = document.body.classList.contains('dark-mode')
+            ? 'Mode Lumière ☀️'
+            : 'Mode Cinéma 🎥';
+    }
+</script>

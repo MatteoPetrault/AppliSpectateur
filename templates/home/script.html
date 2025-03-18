@@ -140,14 +140,20 @@
       panier.forEach((item, index) => {
         if (item.type === 'menu') {
           const menuId = item.menuId ? item.menuId : `menu-${index}`;
+          const discountedPrice = (item.total * item.quantity).toFixed(2);
+          const originalPrice = ((item.total + item.valeur) * item.quantity).toFixed(2);
+
           cartItemsContainer.innerHTML += `
-          <div class="cart-item mb-3" id="${menuId}" data-type="menu" 
-              data-snack-produitId="${item.snack.id}" data-snack-taille="${item.snack.taille}"
-              data-drink-produitId="${item.drink.id}" data-drink-taille="${item.drink.taille}"
-              data-price="${item.total}">
-            <div class="d-flex justify-content-between">
+            <div class="cart-item mb-3 d-flex justify-content-between align-items-center" id="${menuId}" 
+                data-type="menu" data-snack-produitId="${item.snack.id}" 
+                data-snack-taille="${item.snack.taille}" data-drink-produitId="${item.drink.id}" 
+                data-drink-taille="${item.drink.taille}" data-price="${item.total}">
               <div>
-                <h6>Menu</h6>
+                <div class="d-flex align-items-center">
+                  <h6 class="mb-0 me-2">Menu</h6>
+                  <span class="line-price"> ${discountedPrice}€</span>
+                  <span class="original-price" style="text-decoration: line-through; margin-left: 10px;">${originalPrice}€</span>
+                </div>
                 <small>${item.snack.nom} (${item.snack.taille}) + ${item.drink.nom} (${item.drink.taille})</small>
                 <div class="text-success">Remise : ${item.valeur}€</div>
               </div>
@@ -158,29 +164,47 @@
                 <button onclick="retirerMenu('${menuId}')" class="btn btn-sm btn-danger ms-2">×</button>
               </div>
             </div>
-          </div>
-        `;
+          `;
         } else if (item.type === 'normal') {
           const itemId = `panier-${item.produitId}-${item.taille}`;
           cartItemsContainer.innerHTML += `
-          <div id="${itemId}" class="d-flex justify-content-between align-items-center mb-2" data-price="${item.price}" data-produit-id="${item.produitId}" data-taille="${item.taille}" data-type="normal">
-            <div class="transparent-frame">
-              <span>${item.nom} ${item.taille !== "unique" ? `(${item.taille})` : ''}</span>
+          <div id="${itemId}" class="cart-item mb-3 d-flex justify-content-between align-items-center" 
+              data-price="${item.price}" data-produit-id="${item.produitId}" 
+              data-taille="${item.taille}" data-type="normal">
+            <div class="d-flex align-items-center">
+              <span class="produit-nom">${item.nom} ${item.taille !== "unique" ? `(${item.taille})` : ''}</span>
+              <span class="line-price ms-2"> ${(item.price * item.quantity).toFixed(2)}€</span>
             </div>
             <div class="quantity-container">
               <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${item.produitId}', '${item.taille}', -1)">-</button>
               <span class="panier-quantite mx-2">${item.quantity}</span>
               <button class="btn btn-sm btn-secondary" onclick="modifierQuantite('${item.produitId}', '${item.taille}', 1)">+</button>
+              <button onclick="retirerProduit('${item.produitId}', '${item.taille}')" class="btn btn-sm btn-danger ms-2">×</button>
             </div>
           </div>
         `;
+
+        }
+        
+        
+        if (index < panier.length - 1) {
+          cartItemsContainer.innerHTML += `<hr>`;
         }
       });
+      document.getElementById('deliveryFormContainer').style.display = panier.length > 0 ? 'block' : 'none';
+      const viderPanierButton = document.getElementById('viderPanierButton');
+      if (panier.length > 0) {
+        viderPanierButton.style.display = 'block';
+      } else {
+        viderPanierButton.style.display = 'none';
+      }
 
-      document.getElementById('deliveryFormContainer').style.display = cartItemsContainer.children.length > 0 ? 'block' : 'none';
+      //document.getElementById('deliveryFormContainer').style.display = cartItemsContainer.children.length > 0 ? 'block' : 'none';
       updateFloatingCartCount();
       calculateTotal();
     }
+
+
 
     // Ajout d'un produit normal au panier
     function ajouterAuPanierConfirmed(produitId, button) {
@@ -236,18 +260,53 @@
 
     function retirerProduit(produitId, taille) {
       if (!confirm("Confirmer la suppression ?")) return;
-      const itemId = `panier-${produitId}-${taille}`;
-      const element = document.getElementById(itemId);
-      if (element) { element.remove(); }
-      updateCartAfterRemoval();
+
+      fetch('/panier/retirer-produit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          produitId: produitId, 
+          taille: taille 
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          sessionStorage.setItem('panier', JSON.stringify(data.panier));
+          updateCartDisplay();
+        }
+      });
     }
 
     function retirerMenu(menuId) {
       if (!confirm("Confirmer la suppression du menu ?")) return;
-      const element = document.getElementById(menuId);
-      if (element) { element.remove(); }
-      updateCartAfterRemoval();
+
+      fetch('/panier/retirer-menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ menuId: menuId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          sessionStorage.setItem('panier', JSON.stringify(data.panier));
+          updateCartDisplay();
+        }
+      });
     }
+    function viderPanier() {
+      fetch('/panier/vider', {
+        method: 'POST'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          sessionStorage.removeItem('panier');
+          updateCartDisplay();
+        }
+      });
+    }
+
 
     function updateCartAfterRemoval() {
       const cartItemsContainer = document.getElementById('cartItemsContainer');
@@ -385,6 +444,7 @@
       sessionStorage.setItem('panier', JSON.stringify(updatedCart));
     }
 
+
     // Lors du chargement de la page, vous pouvez choisir de vider le panier ou de le conserver
     document.addEventListener("DOMContentLoaded", function () {
       fetch('/panier/get')
@@ -395,6 +455,59 @@
           triCategorie();
         });
     });
+    document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll('.produit-nom').forEach(function(el) {
+      const text = el.textContent.trim();
+      const maxChars = 80;    // On traite les 80 premiers caractères
+      const lineLimit = 12;   // Limite de 12 caractères par ligne
+      let processText = text.substring(0, maxChars);
+      let result = "";
+      let startIndex = 0;
+      
+      while (startIndex < processText.length) {
+        let endIndex = startIndex + lineLimit;
+        // Si la fin du segment dépasse la longueur, on ajoute le reste et on sort
+        if (endIndex >= processText.length) {
+          result += processText.substring(startIndex);
+          break;
+        }
+        
+        // Récupère le segment courant de 12 caractères maximum
+        let segment = processText.substring(startIndex, endIndex);
+        // Cherche le dernier espace dans ce segment
+        let spaceIndex = segment.lastIndexOf(' ');
+        
+        // S'il n'y a pas d'espace, on casse à 12 caractères
+        if (spaceIndex === -1) {
+          spaceIndex = lineLimit;
+        }
+        
+        // Ajoute le segment jusqu'au dernier espace et insère un saut de ligne suivi d'un espace non sécable
+        result += processText.substring(startIndex, startIndex + spaceIndex) + "<br>&nbsp;";
+        
+        // Avance l'indice en passant les espaces éventuels qui suivent
+        startIndex += spaceIndex;
+        while (startIndex < processText.length && processText[startIndex] === ' ') {
+          startIndex++;
+        }
+      }
+      
+      // Si le texte original dépasse 80 caractères, on ajoute le reste après un saut de ligne
+      if (text.length > maxChars) {
+        result += "<br>" + text.substring(maxChars);
+      }
+      
+      // S'assure qu'il y a au moins deux lignes en ajoutant un <br>&nbsp; s'il n'y a pas de saut de ligne
+      if (!result.includes("<br>")) {
+        result += "<br>&nbsp;";
+      }
+      
+      el.innerHTML = result;
+    });
+  });
+
+
+
 
     function openConfirmModal(produitId, button) {
       currentProduitId = produitId;
@@ -459,15 +572,19 @@
       return nameElement ? nameElement.textContent.trim().toLowerCase() : '';
     }
 
+
     function submitOrder(event) {
       event.preventDefault();
+      // Vérifie si le panier est vide
       const cartItems = document.querySelectorAll('#cartItemsContainer > div');
       if (cartItems.length === 0) {
         alert('Votre panier est vide !');
         return;
       }
+      // Construction de l'objet formData avec les informations utilisateur et panier
       const formData = { user: {}, cart: [] };
-
+      
+      // Récupération des informations utilisateur (différencie un utilisateur connecté ou non)
       const userIdElement = document.getElementById('userId');
       if (userIdElement) {
         formData.user.id = userIdElement.value;
@@ -475,9 +592,11 @@
         formData.user.prenom = document.getElementById('prenom').value;
         formData.user.nom = document.getElementById('nom').value;
       }
-
+      
+      // Parcours des items du panier pour construire le tableau des produits commandés
       cartItems.forEach(item => {
         if (item.getAttribute('data-type') === 'menu') {
+          // Pour les menus, décompose en deux produits (snack et boisson)
           const quantity = parseInt(item.querySelector('.panier-quantite').textContent);
           const snackProduitId = parseInt(item.getAttribute('data-snack-produitId'));
           const drinkProduitId = parseInt(item.getAttribute('data-drink-produitId'));
@@ -486,6 +605,7 @@
           formData.cart.push({ produitId: snackProduitId, taille: snackTaille, quantity: quantity });
           formData.cart.push({ produitId: drinkProduitId, taille: drinkTaille, quantity: quantity });
         } else {
+          // Pour les produits normaux, récupération de l'ID et de la taille
           let produitId, taille;
           if (item.dataset.produitId && item.dataset.taille) {
             produitId = parseInt(item.dataset.produitId);
@@ -502,7 +622,8 @@
           });
         }
       });
-
+      
+      // Envoi de la commande via une requête POST vers le endpoint /checkout
       fetch('/checkout', {
         method: 'POST',
         headers: {
@@ -528,6 +649,14 @@
           console.error('Error:', error);
           alert('Une erreur est survenue lors de la validation du panier.');
         });
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const button = document.getElementById('darkModeToggle');
+        button.textContent = document.body.classList.contains('dark-mode')
+            ? 'Mode Lumière ☀️'
+            : 'Mode Cinéma 🎥';
     }
   </script>
 

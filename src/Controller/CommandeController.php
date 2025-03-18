@@ -11,39 +11,42 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Commande; 
-
+use App\Entity\Statut;
 
 class CommandeController extends AbstractController
 {
     /**
      * @Route("/commande", name="commande_index")
      */
-    public function index(Request $request): Response
+    public function index(Request $request, EntityManagerInterface $entityManager): Response
     {
-        // Récupérer l'ID de la commande depuis la session
         $commandeId = $request->getSession()->get('commande_id');
 
         if (!$commandeId) {
-            // Gérer le cas où l'ID de la commande n'existe pas
             return $this->redirectToRoute('home');
         }
-
-        // Statut fusionné
-        $statut = 'En cours de préparation'; // Les deux statuts utilisent maintenant cette clé
-
+        
+        // Récupérer la commande depuis la base de données
+        $commande = $entityManager->getRepository(Commande::class)->find($commandeId);
+        if (!$commande) {
+            return $this->redirectToRoute('home');
+        }
+        
+        // Obtenir le libellé réel du statut (ex: "Enregistrée")
+        $statut = $commande->getStatut()->getLibelle();
+        
         return $this->render('commande/index.html.twig', [
-            'statut' => $statut,
-            'commande' => ['id' => $commandeId],
+            'statut'   => $statut,
+            'commande' => $commande,
         ]);
     }
-
 
     /**
      * @Route("/commande/statut/{id}", name="commande_statut", methods={"GET"})
      */
     public function statut($id, Connection $connection): JsonResponse
     {
-        // Récupérer les informations complètes de la commande
+        // Récupérer les informations de la commande
         $result = $connection->fetchAssociative(
             'SELECT s.libelle, u.nom, u.prenom, c.id AS numero_commande 
             FROM commande c 
@@ -58,20 +61,18 @@ class CommandeController extends AbstractController
         }
 
         return new JsonResponse([
-            'success' => true,
-            'statut' => $result['libelle'],
-            'nom' => $result['nom'],
-            'prenom' => $result['prenom'],
+            'success'         => true,
+            'statut'          => $result['libelle'],
+            'nom'             => $result['nom'],
+            'prenom'          => $result['prenom'],
             'numero_commande' => $result['numero_commande']
         ]);
     }
+
     #[Route('/commande/{id}/avis', name: 'enregistrer_avis', methods: ['POST'])]
     public function enregistrerAvis(Request $request, EntityManagerInterface $entityManager, int $id): JsonResponse
     {
-        // Récupérer les données JSON envoyées
         $data = json_decode($request->getContent(), true);
-
-        // Récupérer la commande associée
         $commande = $entityManager->getRepository(Commande::class)->find($id);
 
         if (!$commande) {
@@ -83,34 +84,40 @@ class CommandeController extends AbstractController
             return new JsonResponse(['success' => false, 'message' => 'Un avis a déjà été soumis pour cette commande.']);
         }
 
-        // Mettre à jour les champs note_avis et commentaire_avis
         $commande->setNoteAvis($data['note']);
         $commande->setCommentaireAvis($data['commentaire']);
-
-        // Enregistrer les modifications en base de données
         $entityManager->flush();
 
         return new JsonResponse(['success' => true, 'message' => 'Avis enregistré avec succès']);
     }
+
     #[Route('/commande/{id}/annuler', name: 'commande_annuler', methods: ['POST'])]
     public function annulerCommande(EntityManagerInterface $entityManager, int $id): JsonResponse
     {
         $commande = $entityManager->getRepository(Commande::class)->find($id);
-        
+    
         if (!$commande) {
             return new JsonResponse(['success' => false, 'message' => 'Commande non trouvée']);
         }
-
-        $commande->setStatut($this->getStatutAnnule($entityManager));
-        $entityManager->flush();
-
-        return new JsonResponse(['success' => true]);
+    
+        // La commande doit être "Enregistrée" pour pouvoir être annulée
+        if ($commande->getStatut()->getLibelle() !== 'Enregistrée') {
+            return new JsonResponse(['success' => false, 'message' => 'La commande ne peut pas être annulée']);
+        }
+    
+        // Mettre à jour le statut (statut_id = 5 correspondant à "Annulé")
+        $conn = $entityManager->getConnection();
+        $result = $conn->executeStatement("UPDATE commande SET statut_id = 5 WHERE id = ?", [$id]);
+    
+        if ($result === 0) {
+            return new JsonResponse(['success' => false, 'message' => 'Erreur lors de la mise à jour du statut']);
+        }
+    
+        return new JsonResponse(['success' => true, 'statut' => 'Annulé']);
     }
 
     private function getStatutAnnule(EntityManagerInterface $em)
     {
         return $em->getRepository(Statut::class)->findOneBy(['libelle' => 'Annulé']);
     }
-
-
 }
